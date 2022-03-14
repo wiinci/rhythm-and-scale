@@ -8,6 +8,9 @@ The output is a collection of CSS custom properties for all headings (`h1`–`h6
 
 ## Demo
 
+![rhythm-and-scale](https://user-images.githubusercontent.com/505739/158106909-8a5bb5bd-0e99-4169-b962-264cc72e5439.gif)
+
+
 ## VS Code API
 
 - [`commands.registerCommand`](https://code.visualstudio.com/api/references/vscode-api#commands.registerCommand)
