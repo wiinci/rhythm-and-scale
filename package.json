@@ -3,6 +3,7 @@
   "displayName": "rhythm-and-scale",
   "description": "CSS variables for various font-sizes based on a modular scale and with line-heights on follow a vertical rhythm ",
   "version": "0.0.1",
+  "repository": "https://github.com/wiinci/rhythm-and-scale",
   "engines": {
     "vscode": "^1.65.0"
   },
