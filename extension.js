@@ -134,7 +134,7 @@ function activate(context) {
         placeHolder: "4",
       });
 
-      const scaleValue = scale ? Number(scale.detail) : Number("1.25");
+      const scaleValue = scale ? Number(scale.detail) : 1.25;
       const rhythmValue = !isNaN(Number(rhythm)) ? Number(rhythm) : 4;
       const fontSizeValue = !isNaN(Number(fontSize)) ? Number(fontSize) : 16;
       const lineHeightValue = !isNaN(Number(lineHeight))
