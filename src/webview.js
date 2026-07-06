@@ -133,12 +133,14 @@ ${cssVars}
     .control-group input[type="range"] {
       padding: 0;
       width: 100%;
-      height: 24px;
+      height: 6px;
       cursor: pointer;
       -webkit-appearance: none;
       appearance: none;
-      background: transparent;
-      border: none;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+      outline: none;
     }
 
     .control-group input[type="range"]::-webkit-slider-track {
@@ -147,17 +149,20 @@ ${cssVars}
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
       border-radius: 3px;
+      cursor: pointer;
     }
 
     .control-group input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       background: var(--vscode-button-background);
+      border: 2px solid var(--vscode-button-background);
       border-radius: 50%;
       cursor: pointer;
-      margin-top: -6px;
+      margin-top: -7px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     .control-group input[type="range"]::-moz-range-track {
@@ -166,15 +171,17 @@ ${cssVars}
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
       border-radius: 3px;
+      cursor: pointer;
     }
 
     .control-group input[type="range"]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       background: var(--vscode-button-background);
-      border: none;
+      border: 2px solid var(--vscode-button-background);
       border-radius: 50%;
       cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     .control-group input[type="range"]:focus {
