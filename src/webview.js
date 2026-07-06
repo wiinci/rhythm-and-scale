@@ -130,6 +130,84 @@ ${cssVars}
       font-family: var(--vscode-font-family);
     }
 
+    .control-group input[type="range"] {
+      padding: 0;
+      width: 100%;
+      height: 24px;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      border: none;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-track {
+      width: 100%;
+      height: 6px;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--vscode-button-background);
+      border-radius: 50%;
+      cursor: pointer;
+      margin-top: -6px;
+    }
+
+    .control-group input[type="range"]::-moz-range-track {
+      width: 100%;
+      height: 6px;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+    }
+
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--vscode-button-background);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .control-group input[type="range"]:focus {
+      outline: none;
+    }
+
+    .control-group input[type="range"]:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+    }
+
+    .control-group input[type="range"]:focus::-moz-range-thumb {
+      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+    }
+
+    .slider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-wrapper input[type="range"] {
+      flex: 1;
+    }
+
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
     .control-group input:focus,
     .control-group select:focus {
       outline: 1px solid var(--vscode-focusBorder);
@@ -235,7 +313,10 @@ ${cssVars}
 
       <div class="control-group">
         <label for="baseFontSize">Base Font Size (px)</label>
-        <input type="number" id="baseFontSize" value="${baseFontSize}" min="8" max="32" step="1">
+        <div class="slider-wrapper">
+          <input type="range" id="baseFontSize" value="${baseFontSize}" min="4" max="40" step="4">
+          <span class="slider-value" id="baseFontSizeValue">${baseFontSize}</span>
+        </div>
       </div>
 
       <div class="control-group">
@@ -245,7 +326,10 @@ ${cssVars}
 
       <div class="control-group">
         <label for="rhythm">Vertical Rhythm (px)</label>
-        <input type="number" id="rhythm" value="${rhythm}" min="1" max="16" step="1">
+        <div class="slider-wrapper">
+          <input type="range" id="rhythm" value="${rhythm}" min="4" max="20" step="1">
+          <span class="slider-value" id="rhythmValue">${rhythm}</span>
+        </div>
       </div>
     </div>
 
@@ -270,8 +354,21 @@ ${cssVars}
     // Get all controls
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
+    const baseFontSizeValue = document.getElementById('baseFontSizeValue');
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
+    const rhythmValue = document.getElementById('rhythmValue');
+
+    // Update slider value displays
+    baseFontSizeInput.addEventListener('input', () => {
+      baseFontSizeValue.textContent = baseFontSizeInput.value;
+      sendUpdate();
+    });
+
+    rhythmInput.addEventListener('input', () => {
+      rhythmValue.textContent = rhythmInput.value;
+      sendUpdate();
+    });
 
     // Send update to extension when any control changes
     function sendUpdate() {
@@ -287,9 +384,7 @@ ${cssVars}
     }
 
     scaleSelect.addEventListener('change', sendUpdate);
-    baseFontSizeInput.addEventListener('input', sendUpdate);
     lineHeightInput.addEventListener('input', sendUpdate);
-    rhythmInput.addEventListener('input', sendUpdate);
 
     // Copy buttons
     document.getElementById('copyCSS').addEventListener('click', () => {
