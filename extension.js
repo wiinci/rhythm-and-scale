@@ -2,6 +2,7 @@ const vscode = require('vscode')
 const {SCALES} = require('./src/scales')
 const {computeScale} = require('./src/compute')
 const {formatOutput, FORMAT_LANGUAGES} = require('./src/format')
+const {showPreview} = require('./src/preview')
 
 const OUTPUT_FORMATS = [
 	{label: 'CSS Custom Properties (rem)', detail: 'css', description: 'Static rem values'},
@@ -27,6 +28,7 @@ function validatePositiveNumber(value) {
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
+	// Command: Generate and export scale
 	const disposable = vscode.commands.registerCommand(
 		'rhythm-and-scale.rhythmAndScale',
 		async () => {
@@ -91,7 +93,15 @@ function activate(context) {
 		},
 	)
 
-	context.subscriptions.push(disposable)
+	// Command: Open live preview panel
+	const previewDisposable = vscode.commands.registerCommand(
+		'rhythm-and-scale.preview',
+		() => {
+			showPreview(context)
+		},
+	)
+
+	context.subscriptions.push(disposable, previewDisposable)
 }
 
 function deactivate() {}

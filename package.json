@@ -24,6 +24,11 @@
 				"command": "rhythm-and-scale.rhythmAndScale",
 				"title": "Generate typographic scale on a vertical rhythm",
 				"category": "Rhythm & Scale"
+			},
+			{
+				"command": "rhythm-and-scale.preview",
+				"title": "Open Live Preview",
+				"category": "Rhythm & Scale"
 			}
 		]
 	},

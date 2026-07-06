@@ -6,6 +6,7 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 
 ## Features
 
+- **🎨 Live Preview Panel** — Interactive webview with real-time updates as you adjust parameters
 - **16 modular scale ratios** — from Minor Second to Major Twelfth
 - **Multiple output formats:**
   - CSS Custom Properties (rem)
@@ -14,6 +15,7 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
   - W3C Design Tokens (JSON)
 - **Input validation** — prompts reject non-numeric values
 - **Vertical rhythm snapping** — line-heights align to your baseline grid
+- **Copy-to-clipboard** — Export CSS directly from preview panel
 
 ## Output Example (CSS Fluid)
 
@@ -36,8 +38,18 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 
 ## Usage
 
+### Option 1: Live Preview (Recommended)
+
 1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-2. Type **"Rhythm & Scale"** and select the command
+2. Type **"Rhythm & Scale: Open Live Preview"**
+3. Interactive panel opens with sample text at all scale levels
+4. Adjust parameters with controls — preview updates in real-time
+5. Click **Copy CSS** / **Copy Fluid** / **Copy Tailwind** to export
+
+### Option 2: Generate and Export
+
+1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+2. Type **"Rhythm & Scale: Generate"**
 3. Choose an output format
 4. Select a scale ratio
 5. Enter base font size, line height, and rhythm values
@@ -66,6 +78,10 @@ extension.js          → VS Code command registration and UI flow
 src/scales.js         → Scale ratios and step definitions (data)
 src/compute.js        → Pure functions: computeScale, pxToRem, fluidClamp
 src/format.js         → Output formatters (CSS, fluid, Tailwind, tokens)
+src/webview.js        → HTML template generator for live preview
+src/preview.js        → WebView panel manager (lifecycle, messaging)
+test/*.test.js        → Unit tests (Node.js built-in test runner)
+```
 test/*.test.js        → Unit tests (Node.js built-in test runner)
 ```
 
