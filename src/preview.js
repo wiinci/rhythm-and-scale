@@ -9,9 +9,9 @@ const {formatOutput} = require('./format')
 let currentPanel = undefined
 
 /**
- * Current preview state
+ * Current preview state (initial defaults)
  */
-let currentState = {
+const currentState = {
 	scale: 1.25,
 	scaleName: 'Major third',
 	baseFontSize: 16,
@@ -52,36 +52,22 @@ function showPreview(context) {
 	currentPanel.webview.onDidReceiveMessage(
 		message => {
 			switch (message.command) {
-				case 'update':
-					// Update state
-					currentState = {
-						scale: message.scale,
-						scaleName: message.scaleName,
-						baseFontSize: message.baseFontSize,
-						lineHeight: message.lineHeight,
-						rhythm: message.rhythm,
-					}
-					// Refresh preview
-					if (currentPanel) {
-						currentPanel.webview.html = generatePreviewHTML(currentState)
-					}
-					break
-
 				case 'copy':
-					// Generate and copy formatted output
+					// Use state from message (current webview state)
+					const state = message.state
 					const items = computeScale({
-						scale: currentState.scale,
-						baseFontSize: currentState.baseFontSize,
-						lineHeight: currentState.lineHeight,
-						rhythm: currentState.rhythm,
+						scale: state.scale,
+						baseFontSize: state.baseFontSize,
+						lineHeight: state.lineHeight,
+						rhythm: state.rhythm,
 					})
 
 					const content = formatOutput(items, {
-						scaleName: currentState.scaleName,
-						scaleValue: currentState.scale,
-						baseFontSize: currentState.baseFontSize,
-						lineHeight: currentState.lineHeight,
-						rhythm: currentState.rhythm,
+						scaleName: state.scaleName,
+						scaleValue: state.scale,
+						baseFontSize: state.baseFontSize,
+						lineHeight: state.lineHeight,
+						rhythm: state.rhythm,
 						format: message.format,
 					})
 

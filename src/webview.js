@@ -43,7 +43,7 @@ function generatePreviewHTML({
 					? 'Small Text'
 					: item.label.toUpperCase()
 		samples += `
-      <div class="sample">
+      <div class="sample" data-label="${item.label}">
         <div class="sample-label">${displayLabel}</div>
         <div class="sample-text" style="font-size: var(--font-size-${item.label}); line-height: var(--line-height-${item.label});">
           The quick brown fox jumps over the lazy dog
@@ -382,6 +382,18 @@ ${cssVars}
   <script>
     const vscode = acquireVsCodeApi();
 
+    // Scale steps configuration
+    const STEPS = [
+      { exponent: -1, label: 'small' },
+      { exponent: 0, label: 'default' },
+      { exponent: 1, label: 'h6' },
+      { exponent: 2, label: 'h5' },
+      { exponent: 3, label: 'h4' },
+      { exponent: 4, label: 'h3' },
+      { exponent: 5, label: 'h2' },
+      { exponent: 6, label: 'h1' }
+    ];
+
     // Get all controls
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
@@ -389,45 +401,71 @@ ${cssVars}
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
     const rhythmValue = document.getElementById('rhythmValue');
+    const scaleInfoDiv = document.querySelector('.scale-info');
 
-    // Update slider value displays
+    // Compute scale and update UI
+    function updatePreview() {
+      const scale = parseFloat(scaleSelect.value);
+      const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
+      const baseFontSize = parseInt(baseFontSizeInput.value);
+      const lineHeight = parseFloat(lineHeightInput.value);
+      const rhythm = parseInt(rhythmInput.value);
+
+      // Update scale info text
+      scaleInfoDiv.innerHTML = \`Current scale: <strong>\${scaleName}</strong> (\${scale}) at \${baseFontSize}px base\`;
+
+      // Compute and apply CSS variables
+      const root = document.documentElement;
+      STEPS.forEach(step => {
+        const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
+        const computedLineHeight = Math.floor(Math.ceil(fontSize * lineHeight) / rhythm) * rhythm;
+        
+        root.style.setProperty(\`--font-size-\${step.label}\`, \`\${fontSize}px\`);
+        root.style.setProperty(\`--line-height-\${step.label}\`, \`\${computedLineHeight}px\`);
+
+        // Update meta text
+        const metaEl = document.querySelector(\`.sample[data-label="\${step.label}"] .sample-meta\`);
+        if (metaEl) {
+          metaEl.textContent = \`\${fontSize}px / \${computedLineHeight}px line-height\`;
+        }
+      });
+    }
+
+    // Update slider value displays and preview
     baseFontSizeInput.addEventListener('input', () => {
       baseFontSizeValue.textContent = baseFontSizeInput.value;
-      sendUpdate();
+      updatePreview();
     });
 
     rhythmInput.addEventListener('input', () => {
       rhythmValue.textContent = rhythmInput.value;
-      sendUpdate();
+      updatePreview();
     });
 
-    // Send update to extension when any control changes
-    function sendUpdate() {
-      const selectedScale = scaleSelect.options[scaleSelect.selectedIndex];
-      vscode.postMessage({
-        command: 'update',
+    scaleSelect.addEventListener('change', updatePreview);
+    lineHeightInput.addEventListener('input', updatePreview);
+
+    // Copy buttons - send current state to extension
+    function getCurrentState() {
+      return {
         scale: parseFloat(scaleSelect.value),
-        scaleName: selectedScale.text.split('(')[0].trim(),
+        scaleName: scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim(),
         baseFontSize: parseInt(baseFontSizeInput.value),
         lineHeight: parseFloat(lineHeightInput.value),
         rhythm: parseInt(rhythmInput.value)
-      });
+      };
     }
 
-    scaleSelect.addEventListener('change', sendUpdate);
-    lineHeightInput.addEventListener('input', sendUpdate);
-
-    // Copy buttons
     document.getElementById('copyCSS').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css' });
+      vscode.postMessage({ command: 'copy', format: 'css', state: getCurrentState() });
     });
 
     document.getElementById('copyFluid').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css-fluid' });
+      vscode.postMessage({ command: 'copy', format: 'css-fluid', state: getCurrentState() });
     });
 
     document.getElementById('copyTailwind').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'tailwind' });
+      vscode.postMessage({ command: 'copy', format: 'tailwind', state: getCurrentState() });
     });
   </script>
 </body>
