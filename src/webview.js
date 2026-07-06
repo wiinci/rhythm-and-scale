@@ -1,0 +1,467 @@
+const {SCALES} = require('./scales')
+const {computeScale} = require('./compute')
+
+/**
+ * Generate the HTML for the live preview webview.
+ * @param {object} params
+ * @param {number} params.scale - Scale ratio
+ * @param {number} params.baseFontSize - Base font size in px
+ * @param {number} params.lineHeight - Line height multiplier
+ * @param {number} params.rhythm - Rhythm grid in px
+ * @param {string} params.scaleName - Human-readable scale name
+ * @returns {string} HTML content
+ */
+function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName}) {
+	const items = computeScale({scale, baseFontSize, lineHeight, rhythm})
+
+	// Generate CSS custom properties
+	let cssVars = ''
+	for (const item of items) {
+		cssVars += `    --font-size-${item.label}: ${item.fontSize}px;\n`
+		cssVars += `    --line-height-${item.label}: ${item.lineHeight}px;\n`
+	}
+
+	// Generate scale options for dropdown
+	const scaleOptions = SCALES.map(
+		(s) =>
+			`<option value="${s.detail}" ${s.detail === scale.toString() ? 'selected' : ''}>${s.label} (${s.detail})</option>`,
+	).join('\n')
+
+	// Generate preview samples
+	let samples = ''
+	for (const item of items) {
+		const displayLabel =
+			item.label === 'default'
+				? 'Body Text'
+				: item.label === 'small'
+					? 'Small Text'
+					: item.label.toUpperCase()
+		samples += `
+      <div class="sample" data-label="${item.label}">
+        <div class="sample-label">${displayLabel}</div>
+        <div class="sample-text" style="font-size: var(--font-size-${item.label}); line-height: var(--line-height-${item.label});">
+          The quick brown fox jumps over the lazy dog
+        </div>
+        <div class="sample-meta">
+          ${item.fontSize}px / ${item.lineHeight}px (×${item.lineHeightMultiplier})
+        </div>
+      </div>
+    `
+	}
+
+	return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>Rhythm & Scale Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--vscode-font-family);
+      color: var(--vscode-foreground);
+      background: var(--vscode-editor-background);
+      padding: 20px;
+    }
+
+    :root {
+${cssVars}
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--vscode-descriptionForeground);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: var(--vscode-editor-inactiveSelectionBackground);
+      border-radius: 6px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    .control-group input,
+    .control-group select {
+      padding: 6px 10px;
+      font-size: 13px;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+      font-family: var(--vscode-font-family);
+    }
+
+    .control-group input[type="range"] {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 20px;
+      cursor: grab;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      outline: none;
+      display: block;
+    }
+
+    .control-group input[type="range"]:active {
+      cursor: grabbing;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--vscode-button-background);
+      border: 3px solid var(--vscode-editor-background);
+      border-radius: 50%;
+      cursor: grab;
+      margin-top: -7px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .control-group input[type="range"]:active::-webkit-slider-thumb {
+      cursor: grabbing;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .control-group input[type="range"]::-moz-range-track {
+      width: 100%;
+      height: 6px;
+      background: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 3px;
+    }
+
+    .control-group input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--vscode-button-background);
+      border: 3px solid var(--vscode-editor-background);
+      border-radius: 50%;
+      cursor: grab;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .control-group input[type="range"]:active::-moz-range-thumb {
+      cursor: grabbing;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .control-group input[type="range"]:focus {
+      outline: none;
+    }
+
+    .control-group input[type="range"]:focus::-webkit-slider-thumb {
+      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+    }
+
+    .control-group input[type="range"]:focus::-moz-range-thumb {
+      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+    }
+
+    .slider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 20px;
+    }
+
+    .slider-wrapper input[type="range"] {
+      flex: 1;
+      margin: 0;
+    }
+
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      font-variant-numeric: tabular-nums;
+      line-height: 20px;
+    }
+
+    .control-group input:focus,
+    .control-group select:focus {
+      outline: 1px solid var(--vscode-focusBorder);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: var(--vscode-font-family);
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
+
+    button.secondary {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+
+    button.secondary:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .preview {
+      padding: 20px;
+      background: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 6px;
+    }
+
+    .sample {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+    }
+
+    .sample:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .sample-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .sample-text {
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    .sample-meta {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      font-family: var(--vscode-editor-font-family);
+    }
+
+    .scale-info {
+      margin-bottom: 20px;
+      padding: 12px;
+      background: var(--vscode-textBlockQuote-background);
+      border-left: 3px solid var(--vscode-textLink-foreground);
+      font-size: 13px;
+      color: var(--vscode-descriptionForeground);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Rhythm & Scale Preview</h1>
+      <p>Adjust parameters to see your typographic scale update in real-time</p>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="scale">Typographic Scale</label>
+        <select id="scale">
+          ${scaleOptions}
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="baseFontSize">Base Font Size (px)</label>
+        <div class="slider-wrapper">
+          <input type="range" id="baseFontSize" value="${baseFontSize}" min="4" max="40" step="4">
+          <span class="slider-value" id="baseFontSizeValue">${baseFontSize}</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="lineHeight">Line Height</label>
+        <input type="number" id="lineHeight" value="${lineHeight}" min="1" max="3" step="0.1">
+      </div>
+
+      <div class="control-group">
+        <label for="rhythm">Vertical Rhythm (px)</label>
+        <div class="slider-wrapper">
+          <input type="range" id="rhythm" value="${rhythm}" min="4" max="20" step="1">
+          <span class="slider-value" id="rhythmValue">${rhythm}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scale-info">
+      Current scale: <strong>${scaleName}</strong> (${scale}) at ${baseFontSize}px base
+    </div>
+
+    <div class="actions">
+      <button id="copyCSS">Copy CSS</button>
+      <button id="copyFluid" class="secondary">Copy Fluid CSS</button>
+      <button id="copyTailwind" class="secondary">Copy Tailwind</button>
+    </div>
+
+    <div class="preview">
+      ${samples}
+    </div>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+
+    // Scale steps configuration
+    const STEPS = [
+      { exponent: -1, label: 'small' },
+      { exponent: 0, label: 'default' },
+      { exponent: 1, label: 'h6' },
+      { exponent: 2, label: 'h5' },
+      { exponent: 3, label: 'h4' },
+      { exponent: 4, label: 'h3' },
+      { exponent: 5, label: 'h2' },
+      { exponent: 6, label: 'h1' }
+    ];
+
+    // Smart line-height: tighter for headings, generous for body
+    const TIGHT_MIN = 1.1;
+    function smartLineHeight(exponent, userLineHeight) {
+      if (exponent <= 0) return userLineHeight;
+      const t = exponent / 6;
+      return userLineHeight - (userLineHeight - TIGHT_MIN) * t;
+    }
+
+    // Get all controls
+    const scaleSelect = document.getElementById('scale');
+    const baseFontSizeInput = document.getElementById('baseFontSize');
+    const baseFontSizeValue = document.getElementById('baseFontSizeValue');
+    const lineHeightInput = document.getElementById('lineHeight');
+    const rhythmInput = document.getElementById('rhythm');
+    const rhythmValue = document.getElementById('rhythmValue');
+    const scaleInfoDiv = document.querySelector('.scale-info');
+
+    // Compute scale and update UI
+    function updatePreview() {
+      const scale = parseFloat(scaleSelect.value);
+      const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
+      const baseFontSize = parseInt(baseFontSizeInput.value);
+      const lineHeight = parseFloat(lineHeightInput.value);
+      const rhythm = parseInt(rhythmInput.value);
+
+      // Update scale info text
+      scaleInfoDiv.innerHTML = \`Current scale: <strong>\${scaleName}</strong> (\${scale}) at \${baseFontSize}px base\`;
+
+      // Compute and apply CSS variables
+      const root = document.documentElement;
+      STEPS.forEach(step => {
+        const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
+        const multiplier = smartLineHeight(step.exponent, lineHeight);
+        const rawLineHeight = Math.ceil(fontSize * multiplier);
+        const snapped = Math.ceil(rawLineHeight / rhythm) * rhythm;
+        const minLineHeight = Math.ceil(fontSize / rhythm) * rhythm;
+        const computedLineHeight = Math.max(snapped, minLineHeight);
+        
+        root.style.setProperty(\`--font-size-\${step.label}\`, \`\${fontSize}px\`);
+        root.style.setProperty(\`--line-height-\${step.label}\`, \`\${computedLineHeight}px\`);
+
+        // Update meta text
+        const metaEl = document.querySelector(\`.sample[data-label="\${step.label}"] .sample-meta\`);
+        if (metaEl) {
+          metaEl.textContent = \`\${fontSize}px / \${computedLineHeight}px (×\${multiplier.toFixed(2)})\`;
+        }
+      });
+    }
+
+    // Update slider value displays and preview
+    baseFontSizeInput.addEventListener('input', () => {
+      baseFontSizeValue.textContent = baseFontSizeInput.value;
+      updatePreview();
+    });
+
+    rhythmInput.addEventListener('input', () => {
+      rhythmValue.textContent = rhythmInput.value;
+      updatePreview();
+    });
+
+    scaleSelect.addEventListener('change', updatePreview);
+    lineHeightInput.addEventListener('input', updatePreview);
+
+    // Copy buttons - send current state to extension
+    function getCurrentState() {
+      return {
+        scale: parseFloat(scaleSelect.value),
+        scaleName: scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim(),
+        baseFontSize: parseInt(baseFontSizeInput.value),
+        lineHeight: parseFloat(lineHeightInput.value),
+        rhythm: parseInt(rhythmInput.value)
+      };
+    }
+
+    document.getElementById('copyCSS').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'css', state: getCurrentState() });
+    });
+
+    document.getElementById('copyFluid').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'css-fluid', state: getCurrentState() });
+    });
+
+    document.getElementById('copyTailwind').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'tailwind', state: getCurrentState() });
+    });
+  </script>
+</body>
+</html>`
+}
+
+module.exports = {generatePreviewHTML}
