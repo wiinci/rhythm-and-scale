@@ -43,7 +43,7 @@ function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName
           The quick brown fox jumps over the lazy dog
         </div>
         <div class="sample-meta">
-          ${item.fontSize}px / ${item.lineHeight}px line-height
+          ${item.fontSize}px / ${item.lineHeight}px (×${item.lineHeightMultiplier})
         </div>
       </div>
     `
@@ -374,6 +374,14 @@ ${cssVars}
       { exponent: 6, label: 'h1' }
     ];
 
+    // Smart line-height: tighter for headings, generous for body
+    const TIGHT_MIN = 1.1;
+    function smartLineHeight(exponent, userLineHeight) {
+      if (exponent <= 0) return userLineHeight;
+      const t = exponent / 6;
+      return userLineHeight - (userLineHeight - TIGHT_MIN) * t;
+    }
+
     // Get all controls
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
@@ -398,7 +406,8 @@ ${cssVars}
       const root = document.documentElement;
       STEPS.forEach(step => {
         const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
-        const computedLineHeight = Math.floor(Math.ceil(fontSize * lineHeight) / rhythm) * rhythm;
+        const multiplier = smartLineHeight(step.exponent, lineHeight);
+        const computedLineHeight = Math.floor(Math.ceil(fontSize * multiplier) / rhythm) * rhythm;
         
         root.style.setProperty(\`--font-size-\${step.label}\`, \`\${fontSize}px\`);
         root.style.setProperty(\`--line-height-\${step.label}\`, \`\${computedLineHeight}px\`);
@@ -406,7 +415,7 @@ ${cssVars}
         // Update meta text
         const metaEl = document.querySelector(\`.sample[data-label="\${step.label}"] .sample-meta\`);
         if (metaEl) {
-          metaEl.textContent = \`\${fontSize}px / \${computedLineHeight}px line-height\`;
+          metaEl.textContent = \`\${fontSize}px / \${computedLineHeight}px (×\${multiplier.toFixed(2)})\`;
         }
       });
     }

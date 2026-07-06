@@ -1,6 +1,6 @@
 const {describe, it} = require('node:test')
 const assert = require('node:assert/strict')
-const {computeScale, pxToRem, fluidClamp} = require('../src/compute')
+const {computeScale, smartLineHeight, pxToRem, fluidClamp} = require('../src/compute')
 
 describe('computeScale', () => {
 	it('returns correct number of steps', () => {
@@ -72,6 +72,66 @@ describe('computeScale', () => {
 				item.lineHeight % 8,
 				0,
 				`${item.label} line-height ${item.lineHeight} not divisible by 8`,
+			)
+		}
+	})
+
+	it('uses tighter line-height for headings than body', () => {
+		const result = computeScale({
+			scale: 1.25,
+			baseFontSize: 16,
+			lineHeight: 1.5,
+			rhythm: 4,
+		})
+		const h1 = result.find((s) => s.label === 'h1')
+		const body = result.find((s) => s.label === 'default')
+		// h1 multiplier should be tighter than body multiplier
+		assert.ok(
+			h1.lineHeightMultiplier < body.lineHeightMultiplier,
+			`h1 multiplier (${h1.lineHeightMultiplier}) should be less than body (${body.lineHeightMultiplier})`,
+		)
+	})
+
+	it('includes lineHeightMultiplier in output', () => {
+		const result = computeScale({
+			scale: 1.25,
+			baseFontSize: 16,
+			lineHeight: 1.5,
+			rhythm: 4,
+		})
+		for (const item of result) {
+			assert.ok(typeof item.lineHeightMultiplier === 'number')
+			assert.ok(item.lineHeightMultiplier >= 1.1)
+			assert.ok(item.lineHeightMultiplier <= 1.5)
+		}
+	})
+})
+
+describe('smartLineHeight', () => {
+	it('returns user line-height for body text (exponent 0)', () => {
+		assert.equal(smartLineHeight(0, 1.5), 1.5)
+	})
+
+	it('returns user line-height for small text (exponent -1)', () => {
+		assert.equal(smartLineHeight(-1, 1.5), 1.5)
+	})
+
+	it('returns tight minimum for h1 (exponent 6)', () => {
+		assert.equal(smartLineHeight(6, 1.5), 1.1)
+	})
+
+	it('interpolates between tight and user value for mid headings', () => {
+		const h3 = smartLineHeight(4, 1.5) // exponent 4
+		assert.ok(h3 > 1.1, `h3 (${h3}) should be > 1.1`)
+		assert.ok(h3 < 1.5, `h3 (${h3}) should be < 1.5`)
+	})
+
+	it('produces monotonically decreasing values from h6 to h1', () => {
+		const values = [1, 2, 3, 4, 5, 6].map((exp) => smartLineHeight(exp, 1.5))
+		for (let i = 1; i < values.length; i++) {
+			assert.ok(
+				values[i] < values[i - 1],
+				`exponent ${i + 1} (${values[i]}) should be less than exponent ${i} (${values[i - 1]})`,
 			)
 		}
 	})
