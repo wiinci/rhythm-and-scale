@@ -12,7 +12,7 @@
 		"no-const-assign": "error",
 		"no-undef": "error",
 		"no-unreachable": "error",
-		"no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+		"no-unused-vars": ["warn", {"argsIgnorePattern": "^_"}],
 		"valid-typeof": "error",
 		"eqeqeq": "warn",
 		"no-var": "error",

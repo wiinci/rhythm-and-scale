@@ -1,4 +1,4 @@
-const { STEPS } = require("./scales");
+const {STEPS} = require('./scales')
 
 /**
  * Compute the typographic scale values for each step.
@@ -11,19 +11,18 @@ const { STEPS } = require("./scales");
  * @param {number} params.rhythm - Vertical rhythm grid unit in px (e.g. 4)
  * @returns {Array<{label: string, exponent: number, fontSize: number, lineHeight: number}>}
  */
-function computeScale({ scale, baseFontSize, lineHeight, rhythm }) {
-  return STEPS.map((step) => {
-    const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
-    const computedLineHeight =
-      Math.floor(Math.ceil(fontSize * lineHeight) / rhythm) * rhythm;
+function computeScale({scale, baseFontSize, lineHeight, rhythm}) {
+	return STEPS.map((step) => {
+		const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize)
+		const computedLineHeight = Math.floor(Math.ceil(fontSize * lineHeight) / rhythm) * rhythm
 
-    return {
-      label: step.label,
-      exponent: step.exponent,
-      fontSize,
-      lineHeight: computedLineHeight,
-    };
-  });
+		return {
+			label: step.label,
+			exponent: step.exponent,
+			fontSize,
+			lineHeight: computedLineHeight,
+		}
+	})
 }
 
 /**
@@ -33,9 +32,9 @@ function computeScale({ scale, baseFontSize, lineHeight, rhythm }) {
  * @returns {string}
  */
 function pxToRem(px, rootSize = 16) {
-  const rem = px / rootSize;
-  // Avoid trailing zeros: 1.0 → "1", 1.25 → "1.25"
-  return `${parseFloat(rem.toFixed(4))}rem`;
+	const rem = px / rootSize
+	// Avoid trailing zeros: 1.0 → "1", 1.25 → "1.25"
+	return `${parseFloat(rem.toFixed(4))}rem`
 }
 
 /**
@@ -48,12 +47,12 @@ function pxToRem(px, rootSize = 16) {
  * @returns {string}
  */
 function fluidClamp(minPx, maxPx, minViewport = 320, maxViewport = 1280) {
-  const minRem = minPx / 16;
-  const slope = (maxPx - minPx) / (maxViewport - minViewport);
-  const slopeVw = parseFloat((slope * 100).toFixed(4));
-  const intercept = parseFloat((minRem - (slope * minViewport) / 16).toFixed(4));
+	const minRem = minPx / 16
+	const slope = (maxPx - minPx) / (maxViewport - minViewport)
+	const slopeVw = parseFloat((slope * 100).toFixed(4))
+	const intercept = parseFloat((minRem - (slope * minViewport) / 16).toFixed(4))
 
-  return `clamp(${pxToRem(minPx)}, ${intercept}rem + ${slopeVw}vw, ${pxToRem(maxPx)})`;
+	return `clamp(${pxToRem(minPx)}, ${intercept}rem + ${slopeVw}vw, ${pxToRem(maxPx)})`
 }
 
-module.exports = { computeScale, pxToRem, fluidClamp };
+module.exports = {computeScale, pxToRem, fluidClamp}

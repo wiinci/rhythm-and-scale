@@ -26,11 +26,11 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 */
 
 :root {
-  --font-size-small: clamp(0.6375rem, 0.425rem + 0.8333vw, 0.8125rem);
-  --line-height-small: 20px;
-  --font-size-default: clamp(0.8rem, 0.5333rem + 1.0417vw, 1rem);
-  --line-height-default: 24px;
-  /* ... h6 through h1 ... */
+	--font-size-small: clamp(0.6375rem, 0.425rem + 0.8333vw, 0.8125rem);
+	--line-height-small: 20px;
+	--font-size-default: clamp(0.8rem, 0.5333rem + 1.0417vw, 1rem);
+	--line-height-default: 24px;
+	/* ... h6 through h1 ... */
 }
 ```
 
