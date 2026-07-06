@@ -60,6 +60,38 @@ describe('computeScale', () => {
 		}
 	})
 
+	it('never produces line-height less than font size', () => {
+		// This exact case triggered the bug: 61px font, ×1.1, rhythm 10
+		// floor(ceil(61*1.1)/10)*10 = floor(68/10)*10 = 60 < 61
+		const result = computeScale({
+			scale: 1.25,
+			baseFontSize: 16,
+			lineHeight: 1.5,
+			rhythm: 10,
+		})
+		for (const item of result) {
+			assert.ok(
+				item.lineHeight >= item.fontSize,
+				`${item.label}: line-height ${item.lineHeight}px must be >= font-size ${item.fontSize}px`,
+			)
+		}
+	})
+
+	it('never produces line-height less than font size with large rhythm', () => {
+		const result = computeScale({
+			scale: 1.5,
+			baseFontSize: 16,
+			lineHeight: 1.2,
+			rhythm: 20,
+		})
+		for (const item of result) {
+			assert.ok(
+				item.lineHeight >= item.fontSize,
+				`${item.label}: line-height ${item.lineHeight}px must be >= font-size ${item.fontSize}px`,
+			)
+		}
+	})
+
 	it('works with different rhythm values', () => {
 		const result = computeScale({
 			scale: 1.25,

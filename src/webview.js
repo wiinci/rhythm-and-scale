@@ -407,7 +407,10 @@ ${cssVars}
       STEPS.forEach(step => {
         const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
         const multiplier = smartLineHeight(step.exponent, lineHeight);
-        const computedLineHeight = Math.floor(Math.ceil(fontSize * multiplier) / rhythm) * rhythm;
+        const rawLineHeight = Math.ceil(fontSize * multiplier);
+        const snapped = Math.ceil(rawLineHeight / rhythm) * rhythm;
+        const minLineHeight = Math.ceil(fontSize / rhythm) * rhythm;
+        const computedLineHeight = Math.max(snapped, minLineHeight);
         
         root.style.setProperty(\`--font-size-\${step.label}\`, \`\${fontSize}px\`);
         root.style.setProperty(\`--line-height-\${step.label}\`, \`\${computedLineHeight}px\`);

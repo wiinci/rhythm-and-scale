@@ -42,7 +42,11 @@ function computeScale({scale, baseFontSize, lineHeight, rhythm}) {
 	return STEPS.map((step) => {
 		const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize)
 		const multiplier = smartLineHeight(step.exponent, lineHeight)
-		const computedLineHeight = Math.floor(Math.ceil(fontSize * multiplier) / rhythm) * rhythm
+		const rawLineHeight = Math.ceil(fontSize * multiplier)
+		const snapped = Math.ceil(rawLineHeight / rhythm) * rhythm
+		// Ensure line-height is never less than font size
+		const minLineHeight = Math.ceil(fontSize / rhythm) * rhythm
+		const computedLineHeight = Math.max(snapped, minLineHeight)
 
 		return {
 			label: step.label,
