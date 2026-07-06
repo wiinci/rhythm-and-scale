@@ -132,7 +132,7 @@ ${cssVars}
 
     .control-group input[type="range"] {
       padding: 0;
-      margin: 8px 0;
+      margin: 0;
       width: 100%;
       height: 20px;
       cursor: grab;
@@ -140,6 +140,7 @@ ${cssVars}
       appearance: none;
       background: transparent;
       outline: none;
+      display: block;
     }
 
     .control-group input[type="range"]:active {
@@ -163,10 +164,8 @@ ${cssVars}
       border: 3px solid var(--vscode-editor-background);
       border-radius: 50%;
       cursor: grab;
-      margin-top: -8px;
+      margin-top: -7px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-      position: relative;
-      z-index: 10;
     }
 
     .control-group input[type="range"]:active::-webkit-slider-thumb {
@@ -213,10 +212,22 @@ ${cssVars}
       display: flex;
       align-items: center;
       gap: 12px;
+      height: 20px;
     }
 
     .slider-wrapper input[type="range"] {
       flex: 1;
+      margin: 0;
+    }
+
+    .slider-value {
+      min-width: 40px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      font-variant-numeric: tabular-nums;
+      line-height: 20px;
     }
 
     .slider-value {
