@@ -11,13 +11,7 @@ const {computeScale} = require('./compute')
  * @param {string} params.scaleName - Human-readable scale name
  * @returns {string} HTML content
  */
-function generatePreviewHTML({
-	scale,
-	baseFontSize,
-	lineHeight,
-	rhythm,
-	scaleName,
-}) {
+function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName}) {
 	const items = computeScale({scale, baseFontSize, lineHeight, rhythm})
 
 	// Generate CSS custom properties
@@ -29,7 +23,7 @@ function generatePreviewHTML({
 
 	// Generate scale options for dropdown
 	const scaleOptions = SCALES.map(
-		s =>
+		(s) =>
 			`<option value="${s.detail}" ${s.detail === scale.toString() ? 'selected' : ''}>${s.label} (${s.detail})</option>`,
 	).join('\n')
 
@@ -230,23 +224,9 @@ ${cssVars}
       line-height: 20px;
     }
 
-    .slider-value {
-      min-width: 40px;
-      text-align: right;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
-      font-variant-numeric: tabular-nums;
-    }
-
     .control-group input:focus,
     .control-group select:focus {
       outline: 1px solid var(--vscode-focusBorder);
-    }
-
-    .control-group .range-value {
-      font-size: 12px;
-      color: var(--vscode-descriptionForeground);
     }
 
     .actions {

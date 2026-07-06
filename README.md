@@ -82,8 +82,6 @@ src/webview.js        → HTML template generator for live preview
 src/preview.js        → WebView panel manager (lifecycle, messaging)
 test/*.test.js        → Unit tests (Node.js built-in test runner)
 ```
-test/*.test.js        → Unit tests (Node.js built-in test runner)
-```
 
 ## VS Code API
 

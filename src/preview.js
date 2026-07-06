@@ -50,7 +50,7 @@ function showPreview(context) {
 
 	// Handle messages from webview
 	currentPanel.webview.onDidReceiveMessage(
-		message => {
+		(message) => {
 			switch (message.command) {
 				case 'copy':
 					// Use state from message (current webview state)

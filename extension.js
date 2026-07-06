@@ -94,12 +94,9 @@ function activate(context) {
 	)
 
 	// Command: Open live preview panel
-	const previewDisposable = vscode.commands.registerCommand(
-		'rhythm-and-scale.preview',
-		() => {
-			showPreview(context)
-		},
-	)
+	const previewDisposable = vscode.commands.registerCommand('rhythm-and-scale.preview', () => {
+		showPreview(context)
+	})
 
 	context.subscriptions.push(disposable, previewDisposable)
 }
