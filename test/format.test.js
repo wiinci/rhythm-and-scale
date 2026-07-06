@@ -39,7 +39,10 @@ describe('formatCSS', () => {
 		const items = getItems()
 		const result = formatCSS(items, {...defaultOptions, format: 'css'})
 		assert.ok(result.includes('rem'), 'should output rem units')
-		assert.ok(!result.match(/--font-size-\w+:\s*\d+px/), 'should not use px for font-size')
+		assert.ok(
+			!result.match(/--font-size-\w+:\s*\d+px/),
+			'should not use px for font-size',
+		)
 	})
 
 	it('includes metadata comment', () => {
@@ -53,14 +56,20 @@ describe('formatCSS', () => {
 describe('formatCSSFluid', () => {
 	it('outputs clamp() expressions', () => {
 		const items = getItems()
-		const result = formatCSSFluid(items, {...defaultOptions, format: 'css-fluid'})
+		const result = formatCSSFluid(items, {
+			...defaultOptions,
+			format: 'css-fluid',
+		})
 		assert.ok(result.includes('clamp('))
 		assert.ok(result.includes('vw'))
 	})
 
 	it('includes fluid range in comment', () => {
 		const items = getItems()
-		const result = formatCSSFluid(items, {...defaultOptions, format: 'css-fluid'})
+		const result = formatCSSFluid(items, {
+			...defaultOptions,
+			format: 'css-fluid',
+		})
 		assert.ok(result.includes('320px'))
 		assert.ok(result.includes('1280px'))
 	})
@@ -69,7 +78,10 @@ describe('formatCSSFluid', () => {
 describe('formatTailwind', () => {
 	it('outputs module.exports with fontSize config', () => {
 		const items = getItems()
-		const result = formatTailwind(items, {...defaultOptions, format: 'tailwind'})
+		const result = formatTailwind(items, {
+			...defaultOptions,
+			format: 'tailwind',
+		})
 		assert.ok(result.includes('module.exports'))
 		assert.ok(result.includes('fontSize'))
 		assert.ok(result.includes('lineHeight'))
@@ -97,7 +109,10 @@ describe('formatOutput', () => {
 		const fluid = formatOutput(items, {...defaultOptions, format: 'css-fluid'})
 		assert.ok(fluid.includes('clamp('))
 
-		const tailwind = formatOutput(items, {...defaultOptions, format: 'tailwind'})
+		const tailwind = formatOutput(items, {
+			...defaultOptions,
+			format: 'tailwind',
+		})
 		assert.ok(tailwind.includes('module.exports'))
 
 		const tokens = formatOutput(items, {...defaultOptions, format: 'tokens'})
