@@ -132,37 +132,46 @@ ${cssVars}
 
     .control-group input[type="range"] {
       padding: 0;
+      margin: 8px 0;
       width: 100%;
-      height: 6px;
-      cursor: pointer;
+      height: 20px;
+      cursor: grab;
       -webkit-appearance: none;
       appearance: none;
-      background: var(--vscode-input-background);
-      border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+      background: transparent;
       outline: none;
     }
 
-    .control-group input[type="range"]::-webkit-slider-track {
+    .control-group input[type="range"]:active {
+      cursor: grabbing;
+    }
+
+    .control-group input[type="range"]::-webkit-slider-runnable-track {
       width: 100%;
       height: 6px;
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
       border-radius: 3px;
-      cursor: pointer;
     }
 
     .control-group input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       background: var(--vscode-button-background);
-      border: 2px solid var(--vscode-button-background);
+      border: 3px solid var(--vscode-editor-background);
       border-radius: 50%;
-      cursor: pointer;
-      margin-top: -7px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      cursor: grab;
+      margin-top: -8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      position: relative;
+      z-index: 10;
+    }
+
+    .control-group input[type="range"]:active::-webkit-slider-thumb {
+      cursor: grabbing;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     }
 
     .control-group input[type="range"]::-moz-range-track {
@@ -171,17 +180,21 @@ ${cssVars}
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
       border-radius: 3px;
-      cursor: pointer;
     }
 
     .control-group input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       background: var(--vscode-button-background);
-      border: 2px solid var(--vscode-button-background);
+      border: 3px solid var(--vscode-editor-background);
       border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      cursor: grab;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .control-group input[type="range"]:active::-moz-range-thumb {
+      cursor: grabbing;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     }
 
     .control-group input[type="range"]:focus {
