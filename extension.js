@@ -39,10 +39,28 @@ function activate(context) {
 			if (!format) return // User cancelled
 
 			// 2. Select typographic scale ratio
-			const scale = await vscode.window.showQuickPick(SCALES, {
+			const scaleOptions = [
+				...SCALES,
+				{ label: 'Custom...', detail: 'custom', description: 'Enter a custom ratio' }
+			]
+			const scale = await vscode.window.showQuickPick(scaleOptions, {
 				placeHolder: 'Select a typographic scale',
 			})
 			if (!scale) return
+
+			let scaleValue = Number(scale.detail)
+			let scaleName = scale.label
+
+			if (scale.detail === 'custom') {
+				const customRatio = await vscode.window.showInputBox({
+					prompt: 'Enter custom scale ratio (e.g. 1.15)',
+					placeHolder: '1.25',
+					validateInput: validatePositiveNumber
+				})
+				if (customRatio === undefined) return
+				scaleValue = Number(customRatio)
+				scaleName = `Custom (${scaleValue})`
+			}
 
 			// 3. Base font size
 			const fontSizeInput = await vscode.window.showInputBox({
@@ -68,7 +86,6 @@ function activate(context) {
 			})
 			if (rhythmInput === undefined) return
 
-			const scaleValue = Number(scale.detail)
 			const baseFontSize = Number(fontSizeInput) || 16
 			const lineHeight = Number(lineHeightInput) || 1.5
 			const rhythm = Number(rhythmInput) || 4
@@ -78,7 +95,7 @@ function activate(context) {
 
 			// 7. Format output
 			const content = formatOutput(items, {
-				scaleName: scale.label,
+				scaleName: scaleName,
 				scaleValue,
 				baseFontSize,
 				lineHeight,

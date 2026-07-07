@@ -22,10 +22,17 @@ function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName
 	}
 
 	// Generate scale options for dropdown
-	const scaleOptions = SCALES.map(
+	let scaleOptions = SCALES.map(
 		(s) =>
 			`<option value="${s.detail}" ${s.detail === scale.toString() ? 'selected' : ''}>${s.label} (${s.detail})</option>`,
 	).join('\n')
+
+	// Add custom option if not already in SCALES
+	const isPreset = SCALES.some((s) => s.detail === scale.toString())
+	if (!isPreset) {
+		scaleOptions += `\n<option value="${scale}" selected>Custom (${scale})</option>`
+	}
+	scaleOptions += `\n<option value="custom">Custom...</option>`
 
 	// Generate preview samples
 	let samples = ''
@@ -264,6 +271,12 @@ ${cssVars}
       background: var(--vscode-editor-background);
       border: 1px solid var(--vscode-panel-border);
       border-radius: 6px;
+      position: relative;
+    }
+
+    .preview.show-grid {
+      background-image: linear-gradient(var(--vscode-panel-border) 1px, transparent 1px);
+      background-size: 100% var(--rhythm-unit, 4px);
     }
 
     .sample {
@@ -320,6 +333,7 @@ ${cssVars}
         <select id="scale">
           ${scaleOptions}
         </select>
+        <input type="number" id="customScale" value="${scale}" step="0.001" min="1" style="display: ${isPreset ? 'none' : 'block'}; margin-top: 8px;">
       </div>
 
       <div class="control-group">
@@ -341,6 +355,10 @@ ${cssVars}
           <input type="range" id="rhythm" value="${rhythm}" min="4" max="20" step="1">
           <span class="slider-value" id="rhythmValue">${rhythm}</span>
         </div>
+        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="showGrid" style="width: auto; margin: 0;">
+          <label for="showGrid" style="font-weight: normal; font-size: 12px; cursor: pointer;">Show Grid</label>
+        </div>
       </div>
     </div>
 
@@ -361,6 +379,8 @@ ${cssVars}
 
   <script>
     const vscode = acquireVsCodeApi();
+
+    const PRESETS = ${JSON.stringify(SCALES.map((s) => s.detail))};
 
     // Scale steps configuration
     const STEPS = [
@@ -384,26 +404,73 @@ ${cssVars}
 
     // Get all controls
     const scaleSelect = document.getElementById('scale');
+    const customScaleInput = document.getElementById('customScale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
     const baseFontSizeValue = document.getElementById('baseFontSizeValue');
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
     const rhythmValue = document.getElementById('rhythmValue');
+    const showGridInput = document.getElementById('showGrid');
+    const previewContainer = document.querySelector('.preview');
     const scaleInfoDiv = document.querySelector('.scale-info');
+
+    // Restore state if available
+    const previousState = vscode.getState();
+    if (previousState) {
+      scaleSelect.value = previousState.scaleSelectValue || '1.25';
+      customScaleInput.value = previousState.customScale || '1.25';
+      baseFontSizeInput.value = previousState.baseFontSize || '16';
+      baseFontSizeValue.textContent = baseFontSizeInput.value;
+      lineHeightInput.value = previousState.lineHeight || '1.5';
+      rhythmInput.value = previousState.rhythm || '4';
+      rhythmValue.textContent = rhythmInput.value;
+      showGridInput.checked = !!previousState.showGrid;
+    }
 
     // Compute scale and update UI
     function updatePreview() {
-      const scale = parseFloat(scaleSelect.value);
-      const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
+      const showGrid = showGridInput.checked;
+      if (showGrid) {
+        previewContainer.classList.add('show-grid');
+      } else {
+        previewContainer.classList.remove('show-grid');
+      }
+
+      let scale;
+      let scaleName;
+      const isCustom = scaleSelect.value === 'custom' || !PRESETS.includes(scaleSelect.value);
+
+      if (isCustom) {
+        customScaleInput.style.display = 'block';
+        scale = parseFloat(customScaleInput.value) || 1.25;
+        scaleName = 'Custom';
+      } else {
+        customScaleInput.style.display = 'none';
+        scale = parseFloat(scaleSelect.value);
+        scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
+      }
+
       const baseFontSize = parseInt(baseFontSizeInput.value);
       const lineHeight = parseFloat(lineHeightInput.value);
       const rhythm = parseInt(rhythmInput.value);
+
+      // Save state
+      vscode.setState({
+        scaleSelectValue: scaleSelect.value,
+        customScale: customScaleInput.value,
+        baseFontSize: baseFontSizeInput.value,
+        lineHeight: lineHeightInput.value,
+        rhythm: rhythmInput.value,
+        showGrid: showGridInput.checked
+      });
 
       // Update scale info text
       scaleInfoDiv.innerHTML = \`Current scale: <strong>\${scaleName}</strong> (\${scale}) at \${baseFontSize}px base\`;
 
       // Compute and apply CSS variables
       const root = document.documentElement;
+      root.style.setProperty('--rhythm-unit', rhythm + 'px');
+
       STEPS.forEach(step => {
         const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
         const multiplier = smartLineHeight(step.exponent, lineHeight);
@@ -434,14 +501,29 @@ ${cssVars}
       updatePreview();
     });
 
+    showGridInput.addEventListener('change', updatePreview);
+
     scaleSelect.addEventListener('change', updatePreview);
+    customScaleInput.addEventListener('input', updatePreview);
     lineHeightInput.addEventListener('input', updatePreview);
 
     // Copy buttons - send current state to extension
     function getCurrentState() {
+      let scale;
+      let scaleName;
+      const isCustom = scaleSelect.value === 'custom' || !PRESETS.includes(scaleSelect.value);
+
+      if (isCustom) {
+        scale = parseFloat(customScaleInput.value) || 1.25;
+        scaleName = 'Custom';
+      } else {
+        scale = parseFloat(scaleSelect.value);
+        scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
+      }
+
       return {
-        scale: parseFloat(scaleSelect.value),
-        scaleName: scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim(),
+        scale,
+        scaleName,
         baseFontSize: parseInt(baseFontSizeInput.value),
         lineHeight: parseFloat(lineHeightInput.value),
         rhythm: parseInt(rhythmInput.value)
