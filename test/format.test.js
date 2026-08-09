@@ -3,6 +3,8 @@ const assert = require('node:assert/strict')
 const {
 	formatCSS,
 	formatCSSFluid,
+	formatCSSRhythm,
+	formatCSSRhythmTrim,
 	formatTailwind,
 	formatTokens,
 	formatOutput,
@@ -75,6 +77,40 @@ describe('formatCSSFluid', () => {
 	})
 })
 
+describe('formatCSSRhythm', () => {
+	it('uses unitless line-height tokens', () => {
+		const items = getItems()
+		const result = formatCSSRhythm(items, {
+			...defaultOptions,
+			format: 'css-rhythm',
+		})
+		assert.ok(result.includes('--line-height-default: 1.5;'))
+		assert.ok(!result.includes('--line-height-default: 24px;'))
+	})
+
+	it('includes lh and rlh spacing tokens', () => {
+		const items = getItems()
+		const result = formatCSSRhythm(items, {
+			...defaultOptions,
+			format: 'css-rhythm',
+		})
+		assert.ok(result.includes('--space-2: 1lh;'))
+		assert.ok(result.includes('--space-section: 2rlh;'))
+	})
+})
+
+describe('formatCSSRhythmTrim', () => {
+	it('wraps trimming styles in @supports for progressive enhancement', () => {
+		const items = getItems()
+		const result = formatCSSRhythmTrim(items, {
+			...defaultOptions,
+			format: 'css-rhythm-trim',
+		})
+		assert.ok(result.includes('@supports (text-box: trim-both cap alphabetic)'))
+		assert.ok(result.includes('text-box: trim-both cap alphabetic;'))
+	})
+})
+
 describe('formatTailwind', () => {
 	it('outputs module.exports with fontSize config', () => {
 		const items = getItems()
@@ -117,5 +153,17 @@ describe('formatOutput', () => {
 
 		const tokens = formatOutput(items, {...defaultOptions, format: 'tokens'})
 		assert.ok(JSON.parse(tokens).fontSize)
+
+		const rhythm = formatOutput(items, {
+			...defaultOptions,
+			format: 'css-rhythm',
+		})
+		assert.ok(rhythm.includes('--space-2: 1lh;'))
+
+		const rhythmTrim = formatOutput(items, {
+			...defaultOptions,
+			format: 'css-rhythm-trim',
+		})
+		assert.ok(rhythmTrim.includes('@supports (text-box: trim-both cap alphabetic)'))
 	})
 })

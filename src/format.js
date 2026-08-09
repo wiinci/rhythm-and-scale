@@ -1,7 +1,7 @@
 const {pxToRem, fluidClamp} = require('./compute')
 
 /**
- * @typedef {'css' | 'css-fluid' | 'tailwind' | 'tokens'} OutputFormat
+ * @typedef {'css' | 'css-fluid' | 'tailwind' | 'tokens' | 'css-rhythm' | 'css-rhythm-trim'} OutputFormat
  */
 
 /**
@@ -69,6 +69,78 @@ function formatCSSFluid(items, options) {
 	}
 
 	content += `}\n`
+	return content
+}
+
+/**
+ * Format a number for compact CSS token output.
+ *
+ * @param {number} value
+ * @returns {string}
+ */
+function formatNumber(value) {
+	return `${parseFloat(value.toFixed(4))}`
+}
+
+/**
+ * Format computed scale items as rhythm-first CSS tokens.
+ * Emits unitless line-height values and line-height-relative spacing tokens.
+ *
+ * @param {Array} items - Computed scale items from computeScale()
+ * @param {FormatOptions} options
+ * @returns {string}
+ */
+function formatCSSRhythm(items, options) {
+	const {scaleName, scaleValue, baseFontSize, lineHeight, rhythm} = options
+
+	let content = `/**\n`
+	content += `  Rhythm typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
+	content += `  Base line-height: ${lineHeight}\n`
+	content += `  Vertical rhythm input: ${rhythm}px\n`
+	content += `  line-height tokens are unitless. spacing tokens use lh/rlh.\n`
+	content += `*/\n\n`
+	content += `:root {\n`
+
+	for (const item of items) {
+		content += `  --font-size-${item.label}: ${pxToRem(item.fontSize, baseFontSize)};\n`
+		content += `  --line-height-${item.label}: ${formatNumber(item.lineHeightMultiplier)};\n`
+	}
+
+	content += `\n`
+	content += `  /* Rhythm spacing tokens */\n`
+	content += `  --space-0: 0;\n`
+	content += `  --space-1: 0.5lh;\n`
+	content += `  --space-2: 1lh;\n`
+	content += `  --space-3: 1.5lh;\n`
+	content += `  --space-4: 2lh;\n`
+	content += `  --space-section: 2rlh;\n`
+	content += `}\n`
+
+	return content
+}
+
+/**
+ * Format rhythm-first CSS tokens plus optional text trimming utilities.
+ * Trimming is wrapped in @supports to keep it progressive.
+ *
+ * @param {Array} items - Computed scale items from computeScale()
+ * @param {FormatOptions} options
+ * @returns {string}
+ */
+function formatCSSRhythmTrim(items, options) {
+	let content = formatCSSRhythm(items, options)
+	content += `\n`
+	content += `/* Progressive enhancement for optical vertical alignment */\n`
+	content += `@supports (text-box: trim-both cap alphabetic) {\n`
+	content += `  .trim-text {\n`
+	content += `    text-box: trim-both cap alphabetic;\n`
+	content += `  }\n`
+	content += `\n`
+	content += `  .trim-text-ex {\n`
+	content += `    text-box: trim-both ex alphabetic;\n`
+	content += `  }\n`
+	content += `}\n`
+
 	return content
 }
 
@@ -142,6 +214,10 @@ function formatOutput(items, options) {
 	switch (options.format) {
 		case 'css-fluid':
 			return formatCSSFluid(items, options)
+		case 'css-rhythm':
+			return formatCSSRhythm(items, options)
+		case 'css-rhythm-trim':
+			return formatCSSRhythmTrim(items, options)
 		case 'tailwind':
 			return formatTailwind(items, options)
 		case 'tokens':
@@ -156,6 +232,8 @@ function formatOutput(items, options) {
 const FORMAT_LANGUAGES = {
 	css: 'css',
 	'css-fluid': 'css',
+	'css-rhythm': 'css',
+	'css-rhythm-trim': 'css',
 	tailwind: 'javascript',
 	tokens: 'json',
 }
@@ -163,6 +241,8 @@ const FORMAT_LANGUAGES = {
 module.exports = {
 	formatCSS,
 	formatCSSFluid,
+	formatCSSRhythm,
+	formatCSSRhythmTrim,
 	formatTailwind,
 	formatTokens,
 	formatOutput,

@@ -351,7 +351,10 @@ ${cssVars}
     <div class="actions">
       <button id="copyCSS">Copy CSS</button>
       <button id="copyFluid" class="secondary">Copy Fluid CSS</button>
+      <button id="copyRhythm" class="secondary">Copy Rhythm CSS</button>
+      <button id="copyRhythmTrim" class="secondary">Copy Rhythm + Trim</button>
       <button id="copyTailwind" class="secondary">Copy Tailwind</button>
+      <button id="copyTokens" class="secondary">Copy Tokens</button>
     </div>
 
     <div class="preview">
@@ -458,6 +461,18 @@ ${cssVars}
 
     document.getElementById('copyTailwind').addEventListener('click', () => {
       vscode.postMessage({ command: 'copy', format: 'tailwind', state: getCurrentState() });
+    });
+
+    document.getElementById('copyRhythm').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'css-rhythm', state: getCurrentState() });
+    });
+
+    document.getElementById('copyRhythmTrim').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'css-rhythm-trim', state: getCurrentState() });
+    });
+
+    document.getElementById('copyTokens').addEventListener('click', () => {
+      vscode.postMessage({ command: 'copy', format: 'tokens', state: getCurrentState() });
     });
   </script>
 </body>

@@ -10,11 +10,13 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 - **16 modular scale ratios** — Minor Second (1.067) through Major Twelfth (3.0)
 - **Smart line-heights** — headings get tighter leading automatically; body text stays generous
 - **Rhythm-snapped line-heights** — always snaps UP to the next grid multiple (never below font size)
-- **4 output formats:**
+- **6 output formats:**
   - CSS Custom Properties (`rem`)
   - CSS Fluid Type (`clamp()` + `vw`)
   - Tailwind CSS theme config
   - W3C Design Tokens (JSON)
+  - CSS Rhythm tokens (`lh` + `rlh`)
+  - CSS Rhythm + Trim (`text-box` progressive enhancement)
 - **Input validation** — prompts reject non-numeric and out-of-range values
 - **Copy-to-clipboard** — export from preview panel directly
 
@@ -28,7 +30,7 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 2. Type **"Rhythm & Scale: Open Live Preview"**
 3. Adjust scale, base font size (4–40px), line-height, and rhythm (4–20px) with sliders
 4. Preview updates instantly — sample text renders at every scale step
-5. Click **Copy CSS** / **Copy Fluid** / **Copy Tailwind** / **Copy Tokens** to export
+5. Click **Copy CSS** / **Copy Fluid** / **Copy Rhythm CSS** / **Copy Rhythm + Trim** / **Copy Tailwind** / **Copy Tokens** to export
 
 ### Option 2: Generate and Export
 
@@ -241,6 +243,42 @@ module.exports = {
 }
 ```
 
+### CSS Rhythm (`lh` + `rlh`)
+
+```css
+:root {
+  --font-size-default: 1rem;
+  --line-height-default: 1.5;
+
+  --space-1: 0.5lh;
+  --space-2: 1lh;
+  --space-3: 1.5lh;
+  --space-section: 2rlh;
+}
+```
+
+### CSS Rhythm + Trim
+
+```css
+:root {
+  --font-size-default: 1rem;
+  --line-height-default: 1.5;
+  --space-2: 1lh;
+}
+
+@supports (text-box: trim-both cap alphabetic) {
+  .trim-text {
+    text-box: trim-both cap alphabetic;
+  }
+}
+```
+
+### Compatibility Notes
+
+- `lh` and `rlh` are widely supported in modern browsers.
+- `text-box` trimming features are still best treated as progressive enhancement.
+- Keep fallback declarations first, then apply `text-box` rules inside `@supports`.
+
 ---
 
 ## Development
@@ -261,11 +299,11 @@ npm install
 
 ### Test Coverage
 
-30 unit tests covering:
+Unit tests covering:
 - Scale computation (all ratios, edge cases)
 - Smart line-height interpolation behavior
 - Line-height ≥ font-size invariant (rhythm snapping guard)
-- All 4 output formatters
+- All 6 output formatters
 - Input validation
 
 ---

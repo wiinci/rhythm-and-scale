@@ -9,6 +9,12 @@ const OUTPUT_FORMATS = [
 	{label: 'CSS Fluid (clamp)', detail: 'css-fluid', description: 'Responsive clamp() expressions'},
 	{label: 'Tailwind Config', detail: 'tailwind', description: 'theme.extend.fontSize'},
 	{label: 'Design Tokens (JSON)', detail: 'tokens', description: 'W3C Design Tokens format'},
+	{label: 'CSS Rhythm (lh/rlh)', detail: 'css-rhythm', description: 'Line-height and rhythm spacing tokens'},
+	{
+		label: 'CSS Rhythm + Trim',
+		detail: 'css-rhythm-trim',
+		description: 'Rhythm tokens + text-box trim enhancement',
+	},
 ]
 
 /**
