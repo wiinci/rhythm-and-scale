@@ -157,6 +157,28 @@ describe('generatePreviewHTML', () => {
 		assert.ok(!/\.specimen {[^}]*margin(?!: 0)/.test(css), 'specimen carries a non-zero margin')
 		assert.ok(!/\.annotation {[^}]*margin(?!: 0)/.test(css), 'annotation carries a non-zero margin')
 	})
+
+	it('styles with theme tokens only: no shadows, hard-coded colors or heavy radii', () => {
+		const css = pageCSS(html)
+		assert.ok(!css.includes('box-shadow'), 'no box shadows')
+		assert.ok(!css.includes('rgba('), 'no rgba colors')
+		assert.ok(!css.includes('#'), 'no hex color literals')
+		for (const radius of css.match(/border-radius:\s*[^;]+/g) ?? []) {
+			assert.ok(/^border-radius:\s*[12]px$/.test(radius.replace(/\s+/g, ' ').trim()), `unexpected radius: ${radius}`)
+		}
+		assert.ok(!css.includes('cursor: grab'), 'no grab cursor')
+	})
+
+	it('shows the focus ring only via :focus-visible in the theme focus color', () => {
+		const css = pageCSS(html).replace(/\s+/g, ' ')
+		assert.ok(css.includes(':is(button, input, select):focus { outline: none; }'))
+		assert.ok(/:focus-visible\s*{[^}]*outline: 1px solid var\(--vscode-focusBorder\)/.test(css))
+	})
+
+	it('uses exactly two type sizes: 12px mono numbers and 13px UI labels', () => {
+		const sizes = [...new Set((pageCSS(html).match(/font-size:\s*[^;]+/g) ?? []).map((s) => s.replace(/\s+/g, ' ').trim()))]
+		assert.deepEqual(sizes.sort(), ['font-size: 12px', 'font-size: 13px'])
+	})
 })
 
 describe('embedModel', () => {
