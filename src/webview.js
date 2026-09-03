@@ -34,7 +34,7 @@ function limitAttributes(key) {
  * @returns {string} HTML content
  */
 function generatePreviewHTML(model) {
-	const scaleOptions = SCALES.map((s) => `<option value="${s.detail}">${s.label} (${s.detail})</option>`).join(
+	const scaleOptions = SCALES.map((s) => `<option value="${s.detail}">${s.label} · ${s.detail}</option>`).join(
 		'\n          ',
 	)
 
@@ -47,287 +47,251 @@ function generatePreviewHTML(model) {
   <title>Rhythm & Scale Preview</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: var(--vscode-font-family);
+      font-size: 13px;
       color: var(--vscode-foreground);
       background: var(--vscode-editor-background);
-      padding: 20px;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    /* ————— Toolbar ————— */
 
-    .header {
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: var(--rhythm) 16px;
+      padding: var(--rhythm) 16px;
+      background: var(--vscode-editor-background);
       border-bottom: 1px solid var(--vscode-panel-border);
     }
 
-    .header h1 {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-
-    .header p {
-      color: var(--vscode-descriptionForeground);
-      font-size: 14px;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: var(--vscode-editor-inactiveSelectionBackground);
-      border-radius: 6px;
-    }
-
-    .control-group {
+    .control {
       display: flex;
       flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .control > label {
+      font-size: 13px;
+      color: var(--vscode-foreground);
+    }
+
+    .control.actions {
+      flex-direction: row;
+      align-items: flex-end;
       gap: 8px;
     }
 
-    .control-group label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
-    }
-
-    .control-group input,
-    .control-group select {
-      padding: 6px 10px;
-      font-size: 13px;
-      background: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+    select {
       font-family: var(--vscode-font-family);
-    }
-
-    .control-group input[type="range"] {
-      padding: 0;
-      margin: 0;
-      width: 100%;
-      height: 20px;
-      cursor: grab;
-      -webkit-appearance: none;
-      appearance: none;
-      background: transparent;
-      outline: none;
-      display: block;
-    }
-
-    .control-group input[type="range"]:active {
-      cursor: grabbing;
-    }
-
-    .control-group input[type="range"]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 6px;
+      font-size: 13px;
+      color: var(--vscode-input-foreground);
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+      border-radius: 2px;
+      padding: 2px 4px;
+      max-width: 100%;
     }
 
-    .control-group input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      background: var(--vscode-button-background);
-      border: 3px solid var(--vscode-editor-background);
-      border-radius: 50%;
-      cursor: grab;
-      margin-top: -7px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-group input[type="range"]:active::-webkit-slider-thumb {
-      cursor: grabbing;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    }
-
-    .control-group input[type="range"]::-moz-range-track {
-      width: 100%;
-      height: 6px;
+    input[type="number"] {
+      width: 4.5em;
+      font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--vscode-input-foreground);
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+      border-radius: 2px;
+      padding: 2px 4px;
     }
 
-    .control-group input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: var(--vscode-button-background);
-      border: 3px solid var(--vscode-editor-background);
-      border-radius: 50%;
-      cursor: grab;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    /* The host rejected the last value; the field keeps its previous rendering. */
+    input[type="number"][aria-invalid="true"] {
+      border-color: var(--vscode-errorForeground);
+      outline: 1px solid var(--vscode-errorForeground);
     }
 
-    .control-group input[type="range"]:active::-moz-range-thumb {
-      cursor: grabbing;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    }
-
-    .control-group input[type="range"]:focus {
-      outline: none;
-    }
-
-    .control-group input[type="range"]:focus::-webkit-slider-thumb {
-      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
-    }
-
-    .control-group input[type="range"]:focus::-moz-range-thumb {
-      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
-    }
-
-    .slider-wrapper {
+    .pair {
       display: flex;
       align-items: center;
-      gap: 12px;
-      height: 20px;
+      gap: 8px;
     }
 
-    .slider-wrapper input[type="range"] {
-      flex: 1;
-      margin: 0;
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1 1 5rem;
+      min-width: 4rem;
+      height: 16px;
+      background: transparent;
     }
 
-    .slider-value {
-      min-width: 40px;
-      text-align: right;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
-      font-variant-numeric: tabular-nums;
-      line-height: 20px;
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 2px;
+      background: var(--vscode-scrollbarSlider-background);
     }
 
-    .control-group input:focus,
-    .control-group select:focus {
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 5px;
+      height: 12px;
+      margin-top: -5px;
+      background: var(--vscode-button-background);
+      border-radius: 1px;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 2px;
+      background: var(--vscode-scrollbarSlider-background);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 5px;
+      height: 12px;
+      background: var(--vscode-button-background);
+      border: none;
+      border-radius: 1px;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--vscode-button-background);
+      width: 13px;
+      height: 13px;
+    }
+
+    :is(button, input, select):focus {
+      outline: none;
+    }
+
+    :is(button, input, select):focus-visible {
       outline: 1px solid var(--vscode-focusBorder);
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-
     button {
-      padding: 8px 16px;
-      font-size: 13px;
       font-family: var(--vscode-font-family);
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
+      font-size: 13px;
+      padding: 3px 12px;
+      color: var(--vscode-button-secondaryForeground);
+      background: var(--vscode-button-secondaryBackground);
       border: none;
-      border-radius: 3px;
+      border-radius: 2px;
       cursor: pointer;
     }
 
     button:hover {
-      background: var(--vscode-button-hoverBackground);
-    }
-
-    button.secondary {
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
-    }
-
-    button.secondary:hover {
       background: var(--vscode-button-secondaryHoverBackground);
     }
 
-    .preview {
-      padding: 20px;
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 6px;
+    /* ————— Specimens ————— */
+
+    .column {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--lh-body);
+      margin-top: var(--lh-body);
+      padding: var(--lh-body);
     }
 
-    .sample {
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--vscode-panel-border);
+    /* The rhythm grid: a faint reference layer with its origin at the
+       column's top edge, one 1px line every --rhythm. It is the
+       lowest-contrast mark on screen and the only reference layer. */
+    .column::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(to bottom, var(--vscode-panel-border) 0 1px, transparent 1px var(--rhythm));
+      opacity: 0.35;
     }
 
-    .sample:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
+    .column.no-grid::before {
+      content: none;
     }
 
-    .sample-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--vscode-descriptionForeground);
-      margin-bottom: 10px;
-      font-weight: 600;
+    .step {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(10rem, 14rem) 1fr;
+      column-gap: var(--lh-body);
+      row-gap: var(--lh-body);
+      align-items: start;
     }
 
-    .sample-text {
-      margin-bottom: 8px;
-      font-weight: 400;
-    }
-
-    .sample-meta {
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
+    .annotation {
       font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
       font-variant-numeric: tabular-nums;
+      color: var(--vscode-descriptionForeground);
+      line-height: var(--lh-body);
+    }
+
+    .specimen {
+      font-family: var(--vscode-font-family);
+      color: var(--vscode-foreground);
+      margin: 0;
+      max-width: 60ch;
+    }
+
+    /* Narrow panels: the annotation sits above its specimen, single column. */
+    @media (max-width: 639px) {
+      .step {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Rhythm & Scale Preview</h1>
-      <p>Adjust parameters to see your typographic scale update in real-time</p>
-    </div>
-
-    <div class="controls">
-      <div class="control-group">
-        <label for="scale">Typographic Scale</label>
-        <select id="scale">
+  <div class="toolbar">
+    <div class="control">
+      <label for="scale">Scale</label>
+      <select id="scale">
           ${scaleOptions}
-        </select>
-      </div>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="baseFontSize">Base Font Size (px)</label>
-        <div class="slider-wrapper">
-          <input type="range" id="baseFontSize" ${limitAttributes('baseFontSize')}>
-          <span class="slider-value" id="baseFontSizeValue"></span>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label for="lineHeight">Line Height</label>
-        <input type="number" id="lineHeight" ${limitAttributes('lineHeight')}>
-      </div>
-
-      <div class="control-group">
-        <label for="rhythm">Vertical Rhythm (px)</label>
-        <div class="slider-wrapper">
-          <input type="range" id="rhythm" ${limitAttributes('rhythm')}>
-          <span class="slider-value" id="rhythmValue"></span>
-        </div>
+    <div class="control">
+      <label for="baseFontSize">Base · px</label>
+      <div class="pair">
+        <input type="range" id="baseFontSize" ${limitAttributes('baseFontSize')}>
+        <input type="number" id="baseFontSizeNumber" aria-label="Base size, exact pixels" ${limitAttributes('baseFontSize')}>
       </div>
     </div>
 
-    <div class="actions">
-      <button id="copy">Copy…</button>
+    <div class="control">
+      <label for="lineHeight">Line-height</label>
+      <input type="number" id="lineHeight" ${limitAttributes('lineHeight')}>
+    </div>
+
+    <div class="control">
+      <label for="rhythm">Rhythm · px</label>
+      <div class="pair">
+        <input type="range" id="rhythm" ${limitAttributes('rhythm')}>
+        <input type="number" id="rhythmNumber" aria-label="Rhythm, exact pixels" ${limitAttributes('rhythm')}>
+      </div>
+    </div>
+
+    <div class="control">
+      <label for="gridToggle">Grid</label>
+      <input type="checkbox" id="gridToggle">
+    </div>
+
+    <div class="control actions">
+      <button id="copy" class="secondary">Copy…</button>
       <button id="open" class="secondary">Open…</button>
     </div>
-
-    <div class="preview" id="preview"></div>
   </div>
+
+  <main class="column" id="preview"></main>
 
   <script type="application/json" id="model">${embedModel(model)}</script>
   <script>
@@ -337,13 +301,16 @@ function generatePreviewHTML(model) {
     const root = document.documentElement;
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
-    const baseFontSizeValue = document.getElementById('baseFontSizeValue');
+    const baseFontSizeNumber = document.getElementById('baseFontSizeNumber');
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
-    const rhythmValue = document.getElementById('rhythmValue');
+    const rhythmNumber = document.getElementById('rhythmNumber');
+    const gridToggle = document.getElementById('gridToggle');
     const preview = document.getElementById('preview');
 
-    const DISPLAY_LABELS = {default: 'Body Text', small: 'Small Text'};
+    // One shared specimen for every step, so leading — not wording — is what
+    // varies across the scale.
+    const SPECIMEN_TEXT = 'Set to a scale, type reads as one voice; set to a grid, every line lands where the eye expects.';
 
     /** The last model the host sent; the only source of every value on screen. */
     let current = null;
@@ -354,21 +321,59 @@ function generatePreviewHTML(model) {
       if (document.activeElement !== input) input.value = String(value);
     }
 
-    // Create the sample shell for a step once; render() fills it every time.
-    function sampleFor(label) {
-      let sample = preview.querySelector('.sample[data-label="' + label + '"]');
-      if (!sample) {
-        sample = document.createElement('div');
-        sample.className = 'sample';
-        sample.dataset.label = label;
-        sample.innerHTML =
-          '<div class="sample-label"></div>' +
-          '<div class="sample-text" style="font-size: var(--font-size-' + label + '); line-height: var(--line-height-' + label + ');">' +
-          'The quick brown fox jumps over the lazy dog</div>' +
-          '<div class="sample-meta"></div>';
-        preview.appendChild(sample);
+    // The host clamps and rejects out-of-range patches; the webview mirrors
+    // the input's own min/max only to flag the field and keep the last valid
+    // rendering. No value on screen is ever computed here.
+    function inLimits(input) {
+      const value = input.valueAsNumber;
+      return Number.isFinite(value) && value >= Number(input.min) && value <= Number(input.max);
+    }
+
+    function flagInvalid(input, invalid) {
+      if (invalid) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+    }
+
+    // A slider and its exact-value number are two ways into the same patch.
+    function bindPair(range, number, key) {
+      range.addEventListener('input', () => {
+        number.value = range.value;
+        flagInvalid(number, false);
+        queuePatch({[key]: range.valueAsNumber});
+      });
+      number.addEventListener('input', () => {
+        if (inLimits(number)) {
+          flagInvalid(number, false);
+          queuePatch({[key]: number.valueAsNumber});
+        } else {
+          flagInvalid(number, true);
+        }
+      });
+      number.addEventListener('blur', () => {
+        flagInvalid(number, false);
+        const value = Math.min(Number(number.max), Math.max(Number(number.min), number.valueAsNumber));
+        if (Number.isFinite(value)) {
+          number.value = String(value);
+          if (current && value !== current[key]) queuePatch({[key]: value});
+        } else if (current) {
+          number.value = String(current[key]);
+        }
+      });
+    }
+
+    // Create the shell for a step once; render() fills it every time.
+    function stepFor(label) {
+      let step = preview.querySelector('.step[data-label="' + label + '"]');
+      if (!step) {
+        step = document.createElement('div');
+        step.className = 'step';
+        step.dataset.label = label;
+        step.innerHTML =
+          '<div class="annotation"><div class="annotation-size"></div><div class="annotation-detail"></div></div>' +
+          '<p class="specimen" style="font-size: var(--font-size-' + label + '); line-height: var(--line-height-' + label + ');">' + SPECIMEN_TEXT + '</p>';
+        preview.appendChild(step);
       }
-      return sample;
+      return step;
     }
 
     /** Write the host's model to the page. Nothing here derives a value. */
@@ -377,27 +382,27 @@ function generatePreviewHTML(model) {
 
       root.style.setProperty('--rhythm', model.rhythm + 'px');
       root.style.setProperty('--lh-body', model.lineHeightBodyPx + 'px');
+      preview.classList.toggle('no-grid', !model.grid);
 
       for (const option of scaleSelect.options) {
         option.selected = Number(option.value) === model.scale;
       }
       setControlValue(baseFontSizeInput, model.baseFontSize);
+      setControlValue(baseFontSizeNumber, model.baseFontSize);
       setControlValue(lineHeightInput, model.lineHeight);
       setControlValue(rhythmInput, model.rhythm);
-      baseFontSizeValue.textContent = String(model.baseFontSize);
-      rhythmValue.textContent = String(model.rhythm);
+      setControlValue(rhythmNumber, model.rhythm);
+      gridToggle.checked = model.grid;
 
       for (const step of model.steps) {
         root.style.setProperty('--font-size-' + step.label, step.fontSizePx + 'px');
         root.style.setProperty('--line-height-' + step.label, step.lineHeightPx + 'px');
 
-        const sample = sampleFor(step.label);
-        sample.querySelector('.sample-label').textContent =
-          DISPLAY_LABELS[step.label] || step.label.toUpperCase();
-        sample.querySelector('.sample-meta').textContent =
-          step.fontSizePx + ' / ' + step.lineHeightPx + ' px · ' +
-          step.fontSizeRem + ' · ×' + step.ratio + ' · ' +
-          step.rhythmUnits + ' × ' + model.rhythm;
+        const el = stepFor(step.label);
+        el.querySelector('.annotation-size').textContent =
+          step.label + ' · ' + step.fontSizePx + ' / ' + step.lineHeightPx + ' px';
+        el.querySelector('.annotation-detail').textContent =
+          step.fontSizeRem + ' · ×' + step.ratio + ' · ' + step.rhythmUnits + ' × ' + model.rhythm;
       }
     }
 
@@ -416,26 +421,33 @@ function generatePreviewHTML(model) {
       }
     }
 
+    bindPair(baseFontSizeInput, baseFontSizeNumber, 'baseFontSize');
+    bindPair(rhythmInput, rhythmNumber, 'rhythm');
+
     scaleSelect.addEventListener('change', () => {
       queuePatch({scale: Number(scaleSelect.value)});
     });
-    baseFontSizeInput.addEventListener('input', () => {
-      queuePatch({baseFontSize: baseFontSizeInput.valueAsNumber});
-    });
-    rhythmInput.addEventListener('input', () => {
-      queuePatch({rhythm: rhythmInput.valueAsNumber});
-    });
+
     lineHeightInput.addEventListener('input', () => {
-      // Blank or unparseable text is not a value; the host keeps the last valid state.
-      if (Number.isFinite(lineHeightInput.valueAsNumber)) {
+      // Blank or out-of-range text is not a value; the host keeps the last
+      // valid state and the field shows the invalid state until it is fixed.
+      if (inLimits(lineHeightInput)) {
+        flagInvalid(lineHeightInput, false);
         queuePatch({lineHeight: lineHeightInput.valueAsNumber});
+      } else {
+        flagInvalid(lineHeightInput, true);
       }
     });
     lineHeightInput.addEventListener('blur', () => {
       // Leaving the field with junk in it restores the last value the host accepted.
-      if (current && !Number.isFinite(lineHeightInput.valueAsNumber)) {
+      if (current && !inLimits(lineHeightInput)) {
         lineHeightInput.value = String(current.lineHeight);
+        flagInvalid(lineHeightInput, false);
       }
+    });
+
+    gridToggle.addEventListener('change', () => {
+      queuePatch({grid: gridToggle.checked});
     });
 
     document.getElementById('copy').addEventListener('click', () => {
