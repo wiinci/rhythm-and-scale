@@ -108,6 +108,31 @@ describe('generatePreviewHTML', () => {
 		assert.ok(html.includes('flagInvalid(lineHeightInput, true)'))
 		assert.ok(html.includes('input[type="number"][aria-invalid="true"]'))
 	})
+
+	it('renders one shared specimen text for all eight steps', () => {
+		const sentence = 'Set to a scale, type reads as one voice; set to a grid, every line lands where the eye expects.'
+		assert.equal(model.steps.length, 8)
+		assert.equal(html.split(sentence).length - 1, 1, 'specimen text has one source; render() stamps it per step')
+		assert.ok(html.includes('for (const step of model.steps)'))
+		assert.ok(html.includes('stepFor(step.label)'))
+	})
+
+	it('annotates each step with label · px and rem · ratio · units, nothing uppercase', () => {
+		assert.ok(html.includes("step.label + ' · ' + step.fontSizePx + ' / ' + step.lineHeightPx + ' px'"))
+		assert.ok(html.includes("step.fontSizeRem + ' · ×' + step.ratio + ' · ' + step.rhythmUnits + ' × ' + model.rhythm"))
+		assert.ok(!html.includes('toUpperCase()'))
+		assert.ok(!html.includes('text-transform'))
+		assert.ok(!html.includes('DISPLAY_LABELS'))
+	})
+
+	it('caps the specimen measure in ch and stacks annotations below 640px', () => {
+		const css = pageCSS(html)
+		assert.ok(/max-width:\s*60ch/.test(css), 'specimen measure capped in ch')
+		assert.ok(css.includes('@media (max-width: 639px)'))
+		assert.ok(/\.annotation\s*{[^}]*font-family:\s*var\(--vscode-editor-font-family\)/.test(css))
+		assert.ok(/\.annotation\s*{[^}]*font-variant-numeric:\s*tabular-nums/.test(css))
+		assert.ok(/\.annotation\s*{[^}]*font-size:\s*12px/.test(css))
+	})
 })
 
 describe('embedModel', () => {

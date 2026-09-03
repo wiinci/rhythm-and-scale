@@ -196,36 +196,36 @@ function generatePreviewHTML(model) {
       padding: 16px;
     }
 
-    .sample {
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--vscode-panel-border);
+    .step {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(10rem, 14rem) 1fr;
+      column-gap: var(--lh-body);
+      row-gap: 8px;
+      align-items: start;
     }
 
-    .sample:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .sample-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--vscode-descriptionForeground);
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-
-    .sample-text {
-      margin-bottom: 8px;
-      font-weight: 400;
-    }
-
-    .sample-meta {
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
+    .annotation {
       font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
       font-variant-numeric: tabular-nums;
+      color: var(--vscode-descriptionForeground);
+      line-height: 20px;
+    }
+
+    .specimen {
+      font-family: var(--vscode-font-family);
+      color: var(--vscode-foreground);
+      margin: 0;
+      max-width: 60ch;
+    }
+
+    /* Narrow panels: the annotation sits above its specimen, single column. */
+    @media (max-width: 639px) {
+      .step {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -287,7 +287,9 @@ function generatePreviewHTML(model) {
     const gridToggle = document.getElementById('gridToggle');
     const preview = document.getElementById('preview');
 
-    const DISPLAY_LABELS = {default: 'Body Text', small: 'Small Text'};
+    // One shared specimen for every step, so leading — not wording — is what
+    // varies across the scale.
+    const SPECIMEN_TEXT = 'Set to a scale, type reads as one voice; set to a grid, every line lands where the eye expects.';
 
     /** The last model the host sent; the only source of every value on screen. */
     let current = null;
@@ -338,21 +340,19 @@ function generatePreviewHTML(model) {
       });
     }
 
-    // Create the sample shell for a step once; render() fills it every time.
-    function sampleFor(label) {
-      let sample = preview.querySelector('.sample[data-label="' + label + '"]');
-      if (!sample) {
-        sample = document.createElement('div');
-        sample.className = 'sample';
-        sample.dataset.label = label;
-        sample.innerHTML =
-          '<div class="sample-label"></div>' +
-          '<div class="sample-text" style="font-size: var(--font-size-' + label + '); line-height: var(--line-height-' + label + ');">' +
-          'The quick brown fox jumps over the lazy dog</div>' +
-          '<div class="sample-meta"></div>';
-        preview.appendChild(sample);
+    // Create the shell for a step once; render() fills it every time.
+    function stepFor(label) {
+      let step = preview.querySelector('.step[data-label="' + label + '"]');
+      if (!step) {
+        step = document.createElement('div');
+        step.className = 'step';
+        step.dataset.label = label;
+        step.innerHTML =
+          '<div class="annotation"><div class="annotation-size"></div><div class="annotation-detail"></div></div>' +
+          '<p class="specimen" style="font-size: var(--font-size-' + label + '); line-height: var(--line-height-' + label + ');">' + SPECIMEN_TEXT + '</p>';
+        preview.appendChild(step);
       }
-      return sample;
+      return step;
     }
 
     /** Write the host's model to the page. Nothing here derives a value. */
@@ -376,13 +376,11 @@ function generatePreviewHTML(model) {
         root.style.setProperty('--font-size-' + step.label, step.fontSizePx + 'px');
         root.style.setProperty('--line-height-' + step.label, step.lineHeightPx + 'px');
 
-        const sample = sampleFor(step.label);
-        sample.querySelector('.sample-label').textContent =
-          DISPLAY_LABELS[step.label] || step.label.toUpperCase();
-        sample.querySelector('.sample-meta').textContent =
-          step.fontSizePx + ' / ' + step.lineHeightPx + ' px · ' +
-          step.fontSizeRem + ' · ×' + step.ratio + ' · ' +
-          step.rhythmUnits + ' × ' + model.rhythm;
+        const el = stepFor(step.label);
+        el.querySelector('.annotation-size').textContent =
+          step.label + ' · ' + step.fontSizePx + ' / ' + step.lineHeightPx + ' px';
+        el.querySelector('.annotation-detail').textContent =
+          step.fontSizeRem + ' · ×' + step.ratio + ' · ' + step.rhythmUnits + ' × ' + model.rhythm;
       }
     }
 
