@@ -1,0 +1,71 @@
+{
+  "$description": "Typographic scale: Major third (1.25) at 16px",
+  "fontSize": {
+    "small": {
+      "$type": "dimension",
+      "$value": "0.8125rem"
+    },
+    "default": {
+      "$type": "dimension",
+      "$value": "1rem"
+    },
+    "h6": {
+      "$type": "dimension",
+      "$value": "1.25rem"
+    },
+    "h5": {
+      "$type": "dimension",
+      "$value": "1.5625rem"
+    },
+    "h4": {
+      "$type": "dimension",
+      "$value": "1.9375rem"
+    },
+    "h3": {
+      "$type": "dimension",
+      "$value": "2.4375rem"
+    },
+    "h2": {
+      "$type": "dimension",
+      "$value": "3.0625rem"
+    },
+    "h1": {
+      "$type": "dimension",
+      "$value": "3.8125rem"
+    }
+  },
+  "lineHeight": {
+    "small": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "default": {
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "h6": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "h5": {
+      "$type": "dimension",
+      "$value": "36px"
+    },
+    "h4": {
+      "$type": "dimension",
+      "$value": "44px"
+    },
+    "h3": {
+      "$type": "dimension",
+      "$value": "52px"
+    },
+    "h2": {
+      "$type": "dimension",
+      "$value": "60px"
+    },
+    "h1": {
+      "$type": "dimension",
+      "$value": "68px"
+    }
+  }
+}

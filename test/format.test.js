@@ -1,5 +1,7 @@
 const {describe, it} = require('node:test')
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
 const {
 	formatCSS,
 	formatCSSFluid,
@@ -166,4 +168,22 @@ describe('formatOutput', () => {
 		})
 		assert.ok(rhythmTrim.includes('@supports (text-box: trim-both cap alphabetic)'))
 	})
+})
+
+const FORMATS = ['css', 'css-fluid', 'tailwind', 'tokens', 'css-rhythm', 'css-rhythm-trim']
+
+/**
+ * Output at the default options as captured from the release tip (676f9b4), before the
+ * export-consistency change. Every deliberate change in output has to show against it.
+ */
+function readBaseline(format) {
+	return fs.readFileSync(path.join(__dirname, 'fixtures', `${format}.base16.txt`), 'utf8')
+}
+
+describe('base 16 output against the release-tip baseline', () => {
+	for (const format of FORMATS) {
+		it(`${format} is byte-identical to the release-tip output`, () => {
+			assert.equal(formatOutput(getItems(), {...defaultOptions, format}), readBaseline(format))
+		})
+	}
 })
