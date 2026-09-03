@@ -18,6 +18,30 @@ const {pxToRem, fluidClamp} = require('./compute')
 const FLUID_VIEWPORT = {min: 320, max: 1280}
 
 /**
+ * Format a number for compact CSS token output.
+ *
+ * @param {number} value
+ * @returns {string}
+ */
+function formatNumber(value) {
+	return `${parseFloat(value.toFixed(4))}`
+}
+
+/**
+ * The header line every format carries to say which root its rem values assume.
+ * Every formatter converts with the base size as root, so a base other than the
+ * browser's 16px only holds if the page sets html { font-size } accordingly.
+ *
+ * @param {number} baseFontSize
+ * @returns {string}
+ */
+function remRootNote(baseFontSize) {
+	if (baseFontSize === 16) return 'rem root: 16px (browser default)'
+	const percentage = formatNumber((baseFontSize / 16) * 100)
+	return `rem root: ${baseFontSize}px — set html { font-size: ${percentage}% }`
+}
+
+/**
  * Format computed scale items into CSS custom properties (static px/rem).
  *
  * @param {Array} items - Computed scale items from computeScale()
@@ -29,6 +53,7 @@ function formatCSS(items, options) {
 
 	let content = `/**\n`
 	content += `  Typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
+	content += `  ${remRootNote(baseFontSize)}\n`
 	content += `  Line-height: ${lineHeight}\n`
 	content += `  Vertical rhythm: ${rhythm}px\n`
 	content += `*/\n\n`
@@ -58,6 +83,7 @@ function formatCSSFluid(items, options) {
 
 	let content = `/**\n`
 	content += `  Fluid typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
+	content += `  ${remRootNote(baseFontSize)}\n`
 	content += `  Line-height: ${lineHeight}\n`
 	content += `  Vertical rhythm: ${rhythm}px\n`
 	content += `  Fluid range: ${FLUID_VIEWPORT.min}px – ${FLUID_VIEWPORT.max}px viewport\n`
@@ -78,16 +104,6 @@ function formatCSSFluid(items, options) {
 }
 
 /**
- * Format a number for compact CSS token output.
- *
- * @param {number} value
- * @returns {string}
- */
-function formatNumber(value) {
-	return `${parseFloat(value.toFixed(4))}`
-}
-
-/**
  * Format computed scale items as rhythm-first CSS tokens.
  * Emits unitless line-height values and line-height-relative spacing tokens. The unitless
  * value is the snapped ratio (lineHeight / fontSize), not the pre-snap target, so 1lh of any
@@ -102,6 +118,7 @@ function formatCSSRhythm(items, options) {
 
 	let content = `/**\n`
 	content += `  Rhythm typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
+	content += `  ${remRootNote(baseFontSize)}\n`
 	content += `  Base line-height: ${lineHeight}\n`
 	content += `  Vertical rhythm input: ${rhythm}px\n`
 	content += `  line-height tokens are unitless. spacing tokens use lh/rlh.\n`
@@ -162,6 +179,7 @@ function formatTailwind(items, options) {
 	const {scaleName, scaleValue, baseFontSize} = options
 
 	let content = `// Typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
+	content += `// ${remRootNote(baseFontSize)}\n`
 	content += `// Add to tailwind.config.js → theme.extend.fontSize\n\n`
 	content += `module.exports = {\n`
 	content += `  theme: {\n`
@@ -191,7 +209,8 @@ function formatTokens(items, options) {
 	const {scaleName, scaleValue, baseFontSize} = options
 
 	const tokens = {
-		$description: `Typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px`,
+		// $description is the format's only free-text slot, so the rem root note lives there
+		$description: `Typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px. ${remRootNote(baseFontSize)}`,
 		fontSize: {},
 		lineHeight: {},
 	}
@@ -253,5 +272,6 @@ module.exports = {
 	formatTailwind,
 	formatTokens,
 	formatOutput,
+	remRootNote,
 	FORMAT_LANGUAGES,
 }

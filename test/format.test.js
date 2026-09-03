@@ -10,6 +10,7 @@ const {
 	formatTailwind,
 	formatTokens,
 	formatOutput,
+	remRootNote,
 } = require('../src/format')
 const {computeScale} = require('../src/compute')
 
@@ -187,16 +188,24 @@ function withoutLineHeightTokens(text) {
 	return text.replace(/^ {2}--line-height-\w+: .+;\n/gm, '')
 }
 
+/** Strip the rem-root note this change adds: a header line, or a sentence in the tokens $description. */
+function withoutRemRootNote(format, text) {
+	const note = remRootNote(16)
+	assert.ok(text.includes(note), `${format} output should state "${note}"`)
+	return format === 'tokens' ? text.replace(`. ${note}`, '') : text.replace(/^.*rem root: .*\n/m, '')
+}
+
 describe('base 16 output against the release-tip baseline', () => {
 	for (const format of ['css', 'css-fluid', 'tailwind', 'tokens']) {
-		it(`${format} is byte-identical to the release-tip output`, () => {
-			assert.equal(formatOutput(getItems(), {...defaultOptions, format}), readBaseline(format))
+		it(`${format} adds only the rem-root note to the release-tip output`, () => {
+			const actual = formatOutput(getItems(), {...defaultOptions, format})
+			assert.equal(withoutRemRootNote(format, actual), readBaseline(format))
 		})
 	}
 
 	for (const format of ['css-rhythm', 'css-rhythm-trim']) {
-		it(`${format} changes only the unitless line-heights, from pre-snap targets to snapped ratios`, () => {
-			const actual = formatOutput(getItems(), {...defaultOptions, format})
+		it(`${format} adds the rem-root note and moves the unitless line-heights from pre-snap targets to snapped ratios`, () => {
+			const actual = withoutRemRootNote(format, formatOutput(getItems(), {...defaultOptions, format}))
 			const baseline = readBaseline(format)
 			assert.equal(withoutLineHeightTokens(actual), withoutLineHeightTokens(baseline))
 			// small … h1: only the default step was already on the grid
