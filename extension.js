@@ -1,21 +1,9 @@
 const vscode = require('vscode')
 const {SCALES} = require('./src/scales')
 const {computeScale} = require('./src/compute')
-const {formatOutput, FORMAT_LANGUAGES} = require('./src/format')
+const {formatOutput} = require('./src/format')
+const {OUTPUT_FORMATS, openOutputDocument} = require('./src/output-formats')
 const {showPreview} = require('./src/preview')
-
-const OUTPUT_FORMATS = [
-	{label: 'CSS Custom Properties (rem)', detail: 'css', description: 'Static rem values'},
-	{label: 'CSS Fluid (clamp)', detail: 'css-fluid', description: 'Responsive clamp() expressions'},
-	{label: 'Tailwind Config', detail: 'tailwind', description: 'theme.extend.fontSize'},
-	{label: 'Design Tokens (JSON)', detail: 'tokens', description: 'W3C Design Tokens format'},
-	{label: 'CSS Rhythm (lh/rlh)', detail: 'css-rhythm', description: 'Line-height and rhythm spacing tokens'},
-	{
-		label: 'CSS Rhythm + Trim',
-		detail: 'css-rhythm-trim',
-		description: 'Rhythm tokens + text-box trim enhancement',
-	},
-]
 
 /**
  * Validate that a string is a positive number.
@@ -93,9 +81,7 @@ function activate(context) {
 			})
 
 			// 8. Display result
-			const language = FORMAT_LANGUAGES[format.detail] || 'css'
-			const doc = await vscode.workspace.openTextDocument({language, content})
-			await vscode.window.showTextDocument(doc)
+			await openOutputDocument(vscode, content, format.detail)
 		},
 	)
 
