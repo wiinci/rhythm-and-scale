@@ -214,3 +214,65 @@ describe('base 16 output against the release-tip baseline', () => {
 		})
 	}
 })
+
+const FORMATS = ['css', 'css-fluid', 'tailwind', 'tokens', 'css-rhythm', 'css-rhythm-trim']
+const base18 = {...defaultOptions, baseFontSize: 18}
+const items18 = computeScale({scale: 1.25, baseFontSize: 18, lineHeight: 1.5, rhythm: 4})
+
+describe('rem root', () => {
+	it('remRootNote names the browser default at 16px and the html font-size to set otherwise', () => {
+		assert.equal(remRootNote(16), 'rem root: 16px (browser default)')
+		assert.equal(remRootNote(18), 'rem root: 18px — set html { font-size: 112.5% }')
+		assert.equal(remRootNote(20), 'rem root: 20px — set html { font-size: 125% }')
+		assert.equal(remRootNote(15), 'rem root: 15px — set html { font-size: 93.75% }')
+	})
+
+	for (const format of FORMATS) {
+		it(`${format} states the rem root at base 16 and at base 18`, () => {
+			const at16 = formatOutput(getItems(), {...defaultOptions, format})
+			const at18 = formatOutput(items18, {...base18, format})
+			assert.ok(at16.includes('rem root: 16px (browser default)'), format)
+			assert.ok(at18.includes('rem root: 18px — set html { font-size: 112.5% }'), format)
+			assert.ok(!at18.includes('browser default'), format)
+		})
+	}
+
+	it('fluid converts with the base size as root, like every other format', () => {
+		const fluid = formatCSSFluid(items18, base18)
+		// body step: 18px is 1rem at the top of the range, 14px (80%, rounded) is 0.7778rem at the bottom
+		assert.ok(fluid.includes('--font-size-default: clamp(0.7778rem, 0.7037rem + 0.4167vw, 1rem);'), fluid)
+		// small step: 14px → 11px at the bottom, both over an 18px root
+		assert.ok(fluid.includes('--font-size-small: clamp(0.6111rem, 0.5556rem + 0.3125vw, 0.7778rem);'), fluid)
+		assert.ok(!fluid.includes('1.125rem'), 'no value should still be converted over a 16px root')
+		// the static css format agrees on the maximum
+		assert.ok(formatCSS(items18, base18).includes('--font-size-default: 1rem;'))
+	})
+})
+
+describe('rhythm formats print the snapped line-height', () => {
+	it('h6 and default at the defaults', () => {
+		const rhythm = formatCSSRhythm(getItems(), defaultOptions)
+		assert.ok(rhythm.includes('--line-height-h6: 1.6;'), rhythm)
+		assert.ok(rhythm.includes('--line-height-default: 1.5;'), rhythm)
+		assert.ok(!rhythm.includes('1.433'), 'the pre-snap target must not be printed')
+	})
+
+	for (const [label, options, items] of [
+		['defaults', defaultOptions, getItems()],
+		['base 18', base18, items18],
+		['base 40, rhythm 8', {...defaultOptions, baseFontSize: 40, rhythm: 8}, computeScale({scale: 1.25, baseFontSize: 40, lineHeight: 1.5, rhythm: 8})],
+	]) {
+		it(`every unitless value × font size is the snapped, on-grid line-height (${label})`, () => {
+			for (const format of [formatCSSRhythm, formatCSSRhythmTrim]) {
+				const output = format(items, options)
+				for (const item of items) {
+					const match = output.match(new RegExp(`--line-height-${item.label}: ([0-9.]+);`))
+					assert.ok(match, `${item.label} has a unitless line-height`)
+					const px = parseFloat(match[1]) * item.fontSize
+					assert.ok(Math.abs(px - item.lineHeight) < 0.01, `${item.label}: ${match[1]} × ${item.fontSize} = ${px}, snapped ${item.lineHeight}`)
+					assert.equal(item.lineHeight % options.rhythm, 0, `${item.label} sits on the ${options.rhythm}px grid`)
+				}
+			}
+		})
+	}
+})
