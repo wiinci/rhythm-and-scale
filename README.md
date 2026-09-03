@@ -6,7 +6,7 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 
 ## Features
 
-- **🎨 Live Preview Panel** — Interactive webview with range sliders and real-time sample text
+- **🎨 Live Preview Panel** — a quiet, model-driven instrument: sticky toolbar, mono annotations, and the rhythm grid drawn behind the type
 - **16 modular scale ratios** — Minor Second (1.067) through Major Twelfth (3.0)
 - **Smart line-heights** — headings get tighter leading automatically; body text stays generous
 - **Rhythm-snapped line-heights** — always snaps UP to the next grid multiple (never below font size)
@@ -18,7 +18,7 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
   - CSS Rhythm tokens (`lh` + `rlh`)
   - CSS Rhythm + Trim (`text-box` progressive enhancement)
 - **Input validation** — prompts reject non-numeric and out-of-range values
-- **Copy-to-clipboard** — export from preview panel directly
+- **Copy or open from the preview** — one Copy… / Open… pair picks any of the six formats from the same picker the Generate command uses
 
 ---
 
@@ -28,9 +28,9 @@ Based on Tim Brown's [More Meaningful Typography](https://alistapart.com/article
 
 1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
 2. Type **"Rhythm & Scale: Open Live Preview"**
-3. Adjust scale, base font size (4–40px), line-height, and rhythm (4–20px) with sliders
-4. Preview updates instantly — sample text renders at every scale step
-5. Click **Copy CSS** / **Copy Fluid** / **Copy Rhythm CSS** / **Copy Rhythm + Trim** / **Copy Tailwind** / **Copy Tokens** to export
+3. Adjust the scale preset, base size (4–40px), line-height, and rhythm (4–20px) in the sticky toolbar — every value also has an editable readout, and the panel remembers your settings across sessions
+4. Toggle **Grid** to draw the rhythm-unit grid behind the specimen text; with it on, every line box lands on a gridline
+5. Use **Copy…** or **Open…** to export: the picker lists all six output formats, and Open… writes the result to a new editor in that format's language
 
 ### Option 2: Generate and Export
 
@@ -51,9 +51,9 @@ flowchart TD
     B -->|"Open Live Preview"| C[WebView Panel]
     B -->|"Generate"| D[QuickPick: format]
 
-    C --> E[Adjust sliders in real-time]
-    E --> F[Client-side compute updates preview]
-    F --> G[Copy button → clipboard]
+    C --> E[Adjust toolbar controls]
+    E --> F[Host validates the patch and renders the model]
+    F --> G[Copy… / Open… → format picker]
 
     D --> H[QuickPick: scale ratio]
     H --> I[InputBox: base font size]
@@ -72,14 +72,15 @@ graph LR
         EXT[extension.js] --> PREVIEW[src/preview.js]
         EXT --> COMPUTE[src/compute.js]
         EXT --> FORMAT[src/format.js]
+        PREVIEW --> MODEL[src/preview-model.js]
         COMPUTE --> SCALES[src/scales.js]
         FORMAT --> COMPUTE
     end
 
     subgraph "WebView Panel"
-        WEBVIEW[src/webview.js] --> CLIENT[Client-side JS]
-        CLIENT -->|"postMessage: copy"| PREVIEW
-        PREVIEW -->|"HTML template"| WEBVIEW
+        WEBVIEW[src/webview.js] --> RENDER[render(model) — no client math]
+        RENDER -->|"postMessage: input / copy / open"| PREVIEW
+        PREVIEW -->|"render message with model"| WEBVIEW
     end
 ```
 
@@ -91,9 +92,10 @@ graph LR
 | `src/scales.js` | 16 scale ratios (data) + 8 step definitions (small → h1) |
 | `src/compute.js` | Pure functions: `computeScale`, `smartLineHeight`, `pxToRem`, `fluidClamp` |
 | `src/format.js` | Output formatters: CSS rem, CSS fluid clamp, Tailwind, Design Tokens |
+| `src/preview-model.js` | Pure display model: `buildPreviewModel`, `applyPatch`, `LIMITS` |
 | `src/webview.js` | HTML template generator for the live preview panel |
-| `src/preview.js` | WebView panel lifecycle, messaging, clipboard |
-| `test/*.test.js` | 30 unit tests (Node.js built-in `node:test` runner) |
+| `src/preview.js` | Panel lifecycle, host-owned state, messaging, Copy…/Open… |
+| `test/*.test.js` | Unit tests (Node.js built-in `node:test` runner) |
 
 ---
 
