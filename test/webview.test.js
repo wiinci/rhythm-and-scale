@@ -1,5 +1,7 @@
 const {describe, it} = require('node:test')
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
 const {generatePreviewHTML, embedModel} = require('../src/webview')
 const {DEFAULT_STATE, LIMITS, buildPreviewModel} = require('../src/preview-model')
 
@@ -178,6 +180,21 @@ describe('generatePreviewHTML', () => {
 	it('uses exactly two type sizes: 12px mono numbers and 13px UI labels', () => {
 		const sizes = [...new Set((pageCSS(html).match(/font-size:\s*[^;]+/g) ?? []).map((s) => s.replace(/\s+/g, ' ').trim()))]
 		assert.deepEqual(sizes.sort(), ['font-size: 12px', 'font-size: 13px'])
+	})
+})
+
+describe('preview harness (dev-only)', () => {
+	const harness = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'preview-harness.js'), 'utf8')
+	const vscodeignore = fs.readFileSync(path.join(__dirname, '..', '.vscodeignore'), 'utf8')
+
+	it('stubs acquireVsCodeApi and answers input with the real model functions', () => {
+		assert.ok(harness.includes('function acquireVsCodeApi()'))
+		assert.ok(harness.includes('applyPatch(__state, message.patch)'))
+		assert.ok(harness.includes('buildPreviewModel(__state)'))
+	})
+
+	it('ships outside the package', () => {
+		assert.ok(vscodeignore.includes('scripts/**'))
 	})
 })
 
