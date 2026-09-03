@@ -89,7 +89,9 @@ function formatNumber(value) {
 
 /**
  * Format computed scale items as rhythm-first CSS tokens.
- * Emits unitless line-height values and line-height-relative spacing tokens.
+ * Emits unitless line-height values and line-height-relative spacing tokens. The unitless
+ * value is the snapped ratio (lineHeight / fontSize), not the pre-snap target, so 1lh of any
+ * step is a whole number of rhythm units and the --space-* tokens land on the grid.
  *
  * @param {Array} items - Computed scale items from computeScale()
  * @param {FormatOptions} options
@@ -108,7 +110,7 @@ function formatCSSRhythm(items, options) {
 
 	for (const item of items) {
 		content += `  --font-size-${item.label}: ${pxToRem(item.fontSize, baseFontSize)};\n`
-		content += `  --line-height-${item.label}: ${formatNumber(item.lineHeightMultiplier)};\n`
+		content += `  --line-height-${item.label}: ${formatNumber(item.lineHeight / item.fontSize)};\n`
 	}
 
 	content += `\n`

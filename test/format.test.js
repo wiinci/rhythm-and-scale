@@ -170,8 +170,6 @@ describe('formatOutput', () => {
 	})
 })
 
-const FORMATS = ['css', 'css-fluid', 'tailwind', 'tokens', 'css-rhythm', 'css-rhythm-trim']
-
 /**
  * Output at the default options as captured from the release tip (676f9b4), before the
  * export-consistency change. Every deliberate change in output has to show against it.
@@ -180,10 +178,30 @@ function readBaseline(format) {
 	return fs.readFileSync(path.join(__dirname, 'fixtures', `${format}.base16.txt`), 'utf8')
 }
 
+/** The `--line-height-<step>` values of a rhythm output, in step order. */
+function lineHeightTokens(text) {
+	return [...text.matchAll(/^ {2}--line-height-\w+: (.+);$/gm)].map((match) => match[1])
+}
+
+function withoutLineHeightTokens(text) {
+	return text.replace(/^ {2}--line-height-\w+: .+;\n/gm, '')
+}
+
 describe('base 16 output against the release-tip baseline', () => {
-	for (const format of FORMATS) {
+	for (const format of ['css', 'css-fluid', 'tailwind', 'tokens']) {
 		it(`${format} is byte-identical to the release-tip output`, () => {
 			assert.equal(formatOutput(getItems(), {...defaultOptions, format}), readBaseline(format))
+		})
+	}
+
+	for (const format of ['css-rhythm', 'css-rhythm-trim']) {
+		it(`${format} changes only the unitless line-heights, from pre-snap targets to snapped ratios`, () => {
+			const actual = formatOutput(getItems(), {...defaultOptions, format})
+			const baseline = readBaseline(format)
+			assert.equal(withoutLineHeightTokens(actual), withoutLineHeightTokens(baseline))
+			// small … h1: only the default step was already on the grid
+			assert.deepEqual(lineHeightTokens(baseline), ['1.5', '1.5', '1.433', '1.367', '1.3', '1.233', '1.167', '1.1'])
+			assert.deepEqual(lineHeightTokens(actual), ['1.5385', '1.5', '1.6', '1.44', '1.4194', '1.3333', '1.2245', '1.1148'])
 		})
 	}
 })
