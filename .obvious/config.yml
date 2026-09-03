@@ -1,0 +1,5 @@
+# Repo policy for Obvious agents — auto-detected from GitHub settings on 2026-09-03.
+# Source: repos/wiinci/rhythm-and-scale (default_branch=main; merge-commit, squash and
+# rebase all enabled; delete_branch_on_merge=true; no readable branch protection).
+defaultBranch: main
+mergeMethod: squash
