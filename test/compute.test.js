@@ -204,4 +204,15 @@ describe('fluidClamp', () => {
 		const result = fluidClamp(16, 32)
 		assert.ok(result.includes('vw'), 'should include vw for fluid scaling')
 	})
+
+	it('defaults to a 16px rem root when the argument is omitted', () => {
+		assert.equal(fluidClamp(16, 32), fluidClamp(16, 32, 320, 1280, 16))
+		assert.equal(fluidClamp(16, 32), 'clamp(1rem, 0.6667rem + 1.6667vw, 2rem)')
+	})
+
+	it('converts the rem terms with the given root and leaves the vw slope alone', () => {
+		// 18px at a 18px root is 1rem; 36px is 2rem. Slope is px per vw, so it does not change.
+		assert.equal(fluidClamp(18, 36, 320, 1280, 18), 'clamp(1rem, 0.6667rem + 1.875vw, 2rem)')
+		assert.equal(fluidClamp(18, 36, 320, 1280, 16), 'clamp(1.125rem, 0.75rem + 1.875vw, 2.25rem)')
+	})
 })

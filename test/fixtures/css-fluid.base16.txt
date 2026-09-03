@@ -1,0 +1,25 @@
+/**
+  Fluid typographic scale: Major third (1.25) at 16px
+  Line-height: 1.5
+  Vertical rhythm: 4px
+  Fluid range: 320px – 1280px viewport
+*/
+
+:root {
+  --font-size-small: clamp(0.625rem, 0.5625rem + 0.3125vw, 0.8125rem);
+  --line-height-small: 20px;
+  --font-size-default: clamp(0.8125rem, 0.75rem + 0.3125vw, 1rem);
+  --line-height-default: 24px;
+  --font-size-h6: clamp(1rem, 0.9167rem + 0.4167vw, 1.25rem);
+  --line-height-h6: 32px;
+  --font-size-h5: clamp(1.25rem, 1.1458rem + 0.5208vw, 1.5625rem);
+  --line-height-h5: 36px;
+  --font-size-h4: clamp(1.5625rem, 1.4375rem + 0.625vw, 1.9375rem);
+  --line-height-h4: 44px;
+  --font-size-h3: clamp(1.9375rem, 1.7708rem + 0.8333vw, 2.4375rem);
+  --line-height-h3: 52px;
+  --font-size-h2: clamp(2.4375rem, 2.2292rem + 1.0417vw, 3.0625rem);
+  --line-height-h2: 60px;
+  --font-size-h1: clamp(3.0625rem, 2.8125rem + 1.25vw, 3.8125rem);
+  --line-height-h1: 68px;
+}
