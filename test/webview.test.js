@@ -133,6 +133,30 @@ describe('generatePreviewHTML', () => {
 		assert.ok(/\.annotation\s*{[^}]*font-variant-numeric:\s*tabular-nums/.test(css))
 		assert.ok(/\.annotation\s*{[^}]*font-size:\s*12px/.test(css))
 	})
+
+	it('draws the rhythm grid as a ::before layer that the Grid toggle can remove', () => {
+		const css = pageCSS(html).replace(/\s+/g, ' ')
+		const grid = css.match(/\.column::before {([^}]*)}/)
+		assert.ok(grid, 'column ::before layer missing')
+		assert.ok(grid[1].includes('repeating-linear-gradient(to bottom, var(--vscode-panel-border) 0 1px, transparent 1px var(--rhythm))'))
+		assert.ok(grid[1].includes('pointer-events: none'))
+		assert.ok(grid[1].includes('position: absolute'))
+		assert.ok(css.includes('.column.no-grid::before { content: none; }'))
+		assert.ok(html.includes("preview.classList.toggle('no-grid', !model.grid)"))
+	})
+
+	it('keeps every vertical dimension in the specimen column a rhythm multiple', () => {
+		const css = pageCSS(html).replace(/\s+/g, ' ')
+		const column = css.match(/\.column {([^}]*)}/)
+		const step = css.match(/\.step {([^}]*)}/)
+		const annotation = css.match(/\.annotation {([^}]*)}/)
+		assert.ok(column, 'column block missing')
+		assert.ok(column[0].includes('gap: var(--lh-body)') && column[0].includes('padding: var(--lh-body)'))
+		assert.ok(step && step[0].includes('row-gap: var(--lh-body)'))
+		assert.ok(annotation && annotation[0].includes('line-height: var(--lh-body)'))
+		assert.ok(!/\.specimen {[^}]*margin/.test(css), 'specimen carries no margin')
+		assert.ok(!/\.annotation {[^}]*margin/.test(css))
+	})
 })
 
 describe('embedModel', () => {

@@ -193,7 +193,28 @@ function generatePreviewHTML(model) {
 
     .column {
       position: relative;
-      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--lh-body);
+      margin-top: var(--lh-body);
+      padding: var(--lh-body);
+    }
+
+    /* The rhythm grid: a faint reference layer with its origin at the
+       column's top edge, one 1px line every --rhythm. It is the
+       lowest-contrast mark on screen and the only reference layer. */
+    .column::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(to bottom, var(--vscode-panel-border) 0 1px, transparent 1px var(--rhythm));
+      opacity: 0.35;
+    }
+
+    .column.no-grid::before {
+      content: none;
     }
 
     .step {
@@ -202,7 +223,7 @@ function generatePreviewHTML(model) {
       display: grid;
       grid-template-columns: minmax(10rem, 14rem) 1fr;
       column-gap: var(--lh-body);
-      row-gap: 8px;
+      row-gap: var(--lh-body);
       align-items: start;
     }
 
@@ -211,7 +232,7 @@ function generatePreviewHTML(model) {
       font-size: 12px;
       font-variant-numeric: tabular-nums;
       color: var(--vscode-descriptionForeground);
-      line-height: 20px;
+      line-height: var(--lh-body);
     }
 
     .specimen {
@@ -361,6 +382,7 @@ function generatePreviewHTML(model) {
 
       root.style.setProperty('--rhythm', model.rhythm + 'px');
       root.style.setProperty('--lh-body', model.lineHeightBodyPx + 'px');
+      preview.classList.toggle('no-grid', !model.grid);
 
       for (const option of scaleSelect.options) {
         option.selected = Number(option.value) === model.scale;
