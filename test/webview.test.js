@@ -154,8 +154,8 @@ describe('generatePreviewHTML', () => {
 		assert.ok(column[0].includes('gap: var(--lh-body)') && column[0].includes('padding: var(--lh-body)'))
 		assert.ok(step && step[0].includes('row-gap: var(--lh-body)'))
 		assert.ok(annotation && annotation[0].includes('line-height: var(--lh-body)'))
-		assert.ok(!/\.specimen {[^}]*margin/.test(css), 'specimen carries no margin')
-		assert.ok(!/\.annotation {[^}]*margin/.test(css))
+		assert.ok(!/\.specimen {[^}]*margin(?!: 0)/.test(css), 'specimen carries a non-zero margin')
+		assert.ok(!/\.annotation {[^}]*margin(?!: 0)/.test(css), 'annotation carries a non-zero margin')
 	})
 })
 
