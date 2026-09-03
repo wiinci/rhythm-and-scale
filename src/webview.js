@@ -34,7 +34,7 @@ function limitAttributes(key) {
  * @returns {string} HTML content
  */
 function generatePreviewHTML(model) {
-	const scaleOptions = SCALES.map((s) => `<option value="${s.detail}">${s.label} (${s.detail})</option>`).join(
+	const scaleOptions = SCALES.map((s) => `<option value="${s.detail}">${s.label} · ${s.detail}</option>`).join(
 		'\n          ',
 	)
 
@@ -47,213 +47,158 @@ function generatePreviewHTML(model) {
   <title>Rhythm & Scale Preview</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: var(--vscode-font-family);
+      font-size: 13px;
       color: var(--vscode-foreground);
       background: var(--vscode-editor-background);
-      padding: 20px;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
+    /* ————— Toolbar ————— */
 
-    .header {
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: var(--rhythm) 16px;
+      padding: var(--rhythm) 16px;
+      background: var(--vscode-editor-background);
       border-bottom: 1px solid var(--vscode-panel-border);
     }
 
-    .header h1 {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-
-    .header p {
-      color: var(--vscode-descriptionForeground);
-      font-size: 14px;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: var(--vscode-editor-inactiveSelectionBackground);
-      border-radius: 6px;
-    }
-
-    .control-group {
+    .control {
       display: flex;
       flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .control > label {
+      font-size: 13px;
+      color: var(--vscode-foreground);
+    }
+
+    .control.actions {
+      flex-direction: row;
+      align-items: flex-end;
       gap: 8px;
     }
 
-    .control-group label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
-    }
-
-    .control-group input,
-    .control-group select {
-      padding: 6px 10px;
-      font-size: 13px;
-      background: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+    select {
       font-family: var(--vscode-font-family);
-    }
-
-    .control-group input[type="range"] {
-      padding: 0;
-      margin: 0;
-      width: 100%;
-      height: 20px;
-      cursor: grab;
-      -webkit-appearance: none;
-      appearance: none;
-      background: transparent;
-      outline: none;
-      display: block;
-    }
-
-    .control-group input[type="range"]:active {
-      cursor: grabbing;
-    }
-
-    .control-group input[type="range"]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 6px;
+      font-size: 13px;
+      color: var(--vscode-input-foreground);
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+      border-radius: 2px;
+      padding: 2px 4px;
+      max-width: 100%;
     }
 
-    .control-group input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      background: var(--vscode-button-background);
-      border: 3px solid var(--vscode-editor-background);
-      border-radius: 50%;
-      cursor: grab;
-      margin-top: -7px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-group input[type="range"]:active::-webkit-slider-thumb {
-      cursor: grabbing;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    }
-
-    .control-group input[type="range"]::-moz-range-track {
-      width: 100%;
-      height: 6px;
+    input[type="number"] {
+      width: 4.5em;
+      font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--vscode-input-foreground);
       background: var(--vscode-input-background);
       border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
+      border-radius: 2px;
+      padding: 2px 4px;
     }
 
-    .control-group input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: var(--vscode-button-background);
-      border: 3px solid var(--vscode-editor-background);
-      border-radius: 50%;
-      cursor: grab;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    /* The host rejected the last value; the field keeps its previous rendering. */
+    input[type="number"][aria-invalid="true"] {
+      border-color: var(--vscode-errorForeground);
+      outline: 1px solid var(--vscode-errorForeground);
     }
 
-    .control-group input[type="range"]:active::-moz-range-thumb {
-      cursor: grabbing;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    }
-
-    .control-group input[type="range"]:focus {
-      outline: none;
-    }
-
-    .control-group input[type="range"]:focus::-webkit-slider-thumb {
-      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
-    }
-
-    .control-group input[type="range"]:focus::-moz-range-thumb {
-      box-shadow: 0 0 0 3px var(--vscode-focusBorder);
-    }
-
-    .slider-wrapper {
+    .pair {
       display: flex;
       align-items: center;
-      gap: 12px;
-      height: 20px;
+      gap: 8px;
     }
 
-    .slider-wrapper input[type="range"] {
-      flex: 1;
-      margin: 0;
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1 1 5rem;
+      min-width: 4rem;
+      height: 16px;
+      background: transparent;
     }
 
-    .slider-value {
-      min-width: 40px;
-      text-align: right;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--vscode-foreground);
-      font-variant-numeric: tabular-nums;
-      line-height: 20px;
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 2px;
+      background: var(--vscode-scrollbarSlider-background);
     }
 
-    .control-group input:focus,
-    .control-group select:focus {
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 5px;
+      height: 12px;
+      margin-top: -5px;
+      background: var(--vscode-button-background);
+      border-radius: 1px;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 2px;
+      background: var(--vscode-scrollbarSlider-background);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 5px;
+      height: 12px;
+      background: var(--vscode-button-background);
+      border: none;
+      border-radius: 1px;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--vscode-button-background);
+      width: 13px;
+      height: 13px;
+    }
+
+    :is(button, input, select):focus {
+      outline: none;
+    }
+
+    :is(button, input, select):focus-visible {
       outline: 1px solid var(--vscode-focusBorder);
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-
     button {
-      padding: 8px 16px;
-      font-size: 13px;
       font-family: var(--vscode-font-family);
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
+      font-size: 13px;
+      padding: 3px 12px;
+      color: var(--vscode-button-secondaryForeground);
+      background: var(--vscode-button-secondaryBackground);
       border: none;
-      border-radius: 3px;
+      border-radius: 2px;
       cursor: pointer;
     }
 
     button:hover {
-      background: var(--vscode-button-hoverBackground);
-    }
-
-    button.secondary {
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
-    }
-
-    button.secondary:hover {
       background: var(--vscode-button-secondaryHoverBackground);
     }
 
-    .preview {
-      padding: 20px;
-      background: var(--vscode-editor-background);
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 6px;
+    /* ————— Specimens ————— */
+
+    .column {
+      position: relative;
+      padding: 16px;
     }
 
     .sample {
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
       border-bottom: 1px solid var(--vscode-panel-border);
     }
 
@@ -285,49 +230,47 @@ function generatePreviewHTML(model) {
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Rhythm & Scale Preview</h1>
-      <p>Adjust parameters to see your typographic scale update in real-time</p>
-    </div>
-
-    <div class="controls">
-      <div class="control-group">
-        <label for="scale">Typographic Scale</label>
-        <select id="scale">
+  <div class="toolbar">
+    <div class="control">
+      <label for="scale">Scale</label>
+      <select id="scale">
           ${scaleOptions}
-        </select>
-      </div>
+      </select>
+    </div>
 
-      <div class="control-group">
-        <label for="baseFontSize">Base Font Size (px)</label>
-        <div class="slider-wrapper">
-          <input type="range" id="baseFontSize" ${limitAttributes('baseFontSize')}>
-          <span class="slider-value" id="baseFontSizeValue"></span>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label for="lineHeight">Line Height</label>
-        <input type="number" id="lineHeight" ${limitAttributes('lineHeight')}>
-      </div>
-
-      <div class="control-group">
-        <label for="rhythm">Vertical Rhythm (px)</label>
-        <div class="slider-wrapper">
-          <input type="range" id="rhythm" ${limitAttributes('rhythm')}>
-          <span class="slider-value" id="rhythmValue"></span>
-        </div>
+    <div class="control">
+      <label for="baseFontSize">Base · px</label>
+      <div class="pair">
+        <input type="range" id="baseFontSize" ${limitAttributes('baseFontSize')}>
+        <input type="number" id="baseFontSizeNumber" aria-label="Base size, exact pixels" ${limitAttributes('baseFontSize')}>
       </div>
     </div>
 
-    <div class="actions">
-      <button id="copy">Copy…</button>
+    <div class="control">
+      <label for="lineHeight">Line-height</label>
+      <input type="number" id="lineHeight" ${limitAttributes('lineHeight')}>
+    </div>
+
+    <div class="control">
+      <label for="rhythm">Rhythm · px</label>
+      <div class="pair">
+        <input type="range" id="rhythm" ${limitAttributes('rhythm')}>
+        <input type="number" id="rhythmNumber" aria-label="Rhythm, exact pixels" ${limitAttributes('rhythm')}>
+      </div>
+    </div>
+
+    <div class="control">
+      <label for="gridToggle">Grid</label>
+      <input type="checkbox" id="gridToggle">
+    </div>
+
+    <div class="control actions">
+      <button id="copy" class="secondary">Copy…</button>
       <button id="open" class="secondary">Open…</button>
     </div>
-
-    <div class="preview" id="preview"></div>
   </div>
+
+  <main class="column" id="preview"></main>
 
   <script type="application/json" id="model">${embedModel(model)}</script>
   <script>
@@ -337,10 +280,11 @@ function generatePreviewHTML(model) {
     const root = document.documentElement;
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
-    const baseFontSizeValue = document.getElementById('baseFontSizeValue');
+    const baseFontSizeNumber = document.getElementById('baseFontSizeNumber');
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
-    const rhythmValue = document.getElementById('rhythmValue');
+    const rhythmNumber = document.getElementById('rhythmNumber');
+    const gridToggle = document.getElementById('gridToggle');
     const preview = document.getElementById('preview');
 
     const DISPLAY_LABELS = {default: 'Body Text', small: 'Small Text'};
@@ -352,6 +296,46 @@ function generatePreviewHTML(model) {
     // focused field would clobber a half-typed number.
     function setControlValue(input, value) {
       if (document.activeElement !== input) input.value = String(value);
+    }
+
+    // The host clamps and rejects out-of-range patches; the webview mirrors
+    // the input's own min/max only to flag the field and keep the last valid
+    // rendering. No value on screen is ever computed here.
+    function inLimits(input) {
+      const value = input.valueAsNumber;
+      return Number.isFinite(value) && value >= Number(input.min) && value <= Number(input.max);
+    }
+
+    function flagInvalid(input, invalid) {
+      if (invalid) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+    }
+
+    // A slider and its exact-value number are two ways into the same patch.
+    function bindPair(range, number, key) {
+      range.addEventListener('input', () => {
+        number.value = range.value;
+        flagInvalid(number, false);
+        queuePatch({[key]: range.valueAsNumber});
+      });
+      number.addEventListener('input', () => {
+        if (inLimits(number)) {
+          flagInvalid(number, false);
+          queuePatch({[key]: number.valueAsNumber});
+        } else {
+          flagInvalid(number, true);
+        }
+      });
+      number.addEventListener('blur', () => {
+        flagInvalid(number, false);
+        const value = Math.min(Number(number.max), Math.max(Number(number.min), number.valueAsNumber));
+        if (Number.isFinite(value)) {
+          number.value = String(value);
+          if (current && value !== current[key]) queuePatch({[key]: value});
+        } else if (current) {
+          number.value = String(current[key]);
+        }
+      });
     }
 
     // Create the sample shell for a step once; render() fills it every time.
@@ -382,10 +366,11 @@ function generatePreviewHTML(model) {
         option.selected = Number(option.value) === model.scale;
       }
       setControlValue(baseFontSizeInput, model.baseFontSize);
+      setControlValue(baseFontSizeNumber, model.baseFontSize);
       setControlValue(lineHeightInput, model.lineHeight);
       setControlValue(rhythmInput, model.rhythm);
-      baseFontSizeValue.textContent = String(model.baseFontSize);
-      rhythmValue.textContent = String(model.rhythm);
+      setControlValue(rhythmNumber, model.rhythm);
+      gridToggle.checked = model.grid;
 
       for (const step of model.steps) {
         root.style.setProperty('--font-size-' + step.label, step.fontSizePx + 'px');
@@ -416,26 +401,33 @@ function generatePreviewHTML(model) {
       }
     }
 
+    bindPair(baseFontSizeInput, baseFontSizeNumber, 'baseFontSize');
+    bindPair(rhythmInput, rhythmNumber, 'rhythm');
+
     scaleSelect.addEventListener('change', () => {
       queuePatch({scale: Number(scaleSelect.value)});
     });
-    baseFontSizeInput.addEventListener('input', () => {
-      queuePatch({baseFontSize: baseFontSizeInput.valueAsNumber});
-    });
-    rhythmInput.addEventListener('input', () => {
-      queuePatch({rhythm: rhythmInput.valueAsNumber});
-    });
+
     lineHeightInput.addEventListener('input', () => {
-      // Blank or unparseable text is not a value; the host keeps the last valid state.
-      if (Number.isFinite(lineHeightInput.valueAsNumber)) {
+      // Blank or out-of-range text is not a value; the host keeps the last
+      // valid state and the field shows the invalid state until it is fixed.
+      if (inLimits(lineHeightInput)) {
+        flagInvalid(lineHeightInput, false);
         queuePatch({lineHeight: lineHeightInput.valueAsNumber});
+      } else {
+        flagInvalid(lineHeightInput, true);
       }
     });
     lineHeightInput.addEventListener('blur', () => {
       // Leaving the field with junk in it restores the last value the host accepted.
-      if (current && !Number.isFinite(lineHeightInput.valueAsNumber)) {
+      if (current && !inLimits(lineHeightInput)) {
         lineHeightInput.value = String(current.lineHeight);
+        flagInvalid(lineHeightInput, false);
       }
+    });
+
+    gridToggle.addEventListener('change', () => {
+      queuePatch({grid: gridToggle.checked});
     });
 
     document.getElementById('copy').addEventListener('click', () => {

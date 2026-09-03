@@ -13,6 +13,13 @@ function embeddedModel(page) {
 	return match[1]
 }
 
+/** The <style> block of the generated page. */
+function pageCSS(page) {
+	const match = page.match(/<style>([\s\S]*?)<\/style>/)
+	assert.ok(match, 'style block missing')
+	return match[1]
+}
+
 describe('generatePreviewHTML', () => {
 	it('embeds the host model as JSON that parses back to the same model', () => {
 		assert.deepEqual(JSON.parse(embeddedModel(html)), model)
@@ -59,8 +66,47 @@ describe('generatePreviewHTML', () => {
 	})
 
 	it('renders no specimen numbers server-side; every value comes from render()', () => {
-		assert.ok(html.includes('<div class="preview" id="preview"></div>'))
+		assert.ok(html.includes('<main class="column" id="preview"></main>'))
 		assert.ok(!html.includes('<div class="sample" data-label'))
+	})
+
+	it('opens on a sticky toolbar instead of a header', () => {
+		const css = pageCSS(html)
+		assert.ok(/\.toolbar\s*{[^}]*position:\s*sticky;/.test(css), 'toolbar must be sticky')
+		assert.ok(css.includes('border-bottom: 1px solid var(--vscode-panel-border)'), 'single hairline under the toolbar')
+		assert.ok(!html.includes('<h1>'), 'no header block')
+		assert.ok(!html.includes('class="controls"'), 'no boxed control panel')
+	})
+
+	it('toggles the rhythm grid with a checkbox seeded from the model', () => {
+		assert.ok(html.includes('<label for="gridToggle">Grid</label>'))
+		assert.ok(html.includes('<input type="checkbox" id="gridToggle">'))
+		assert.ok(html.includes('gridToggle.checked = model.grid'))
+		assert.ok(html.includes('queuePatch({grid: gridToggle.checked})'))
+	})
+
+	it('pairs each slider with an editable exact-value field bound to the same patch', () => {
+		assert.ok(html.includes('id="baseFontSizeNumber"'))
+		assert.ok(html.includes('id="rhythmNumber"'))
+		assert.ok(html.includes("bindPair(baseFontSizeInput, baseFontSizeNumber, 'baseFontSize')"))
+		assert.ok(html.includes("bindPair(rhythmInput, rhythmNumber, 'rhythm')"))
+	})
+
+	it('associates every control with a visible label or an accessible name', () => {
+		for (const tag of html.match(/<(input|select)\b[^>]*>/g)) {
+			const id = tag.match(/id="([^"]+)"/)?.[1]
+			const named = (id && html.includes(`for="${id}"`)) || tag.includes('aria-label=')
+			assert.ok(named, `unlabelled control: ${tag}`)
+		}
+		for (const match of html.match(/for="[^"]+"/g) ?? []) {
+			const id = match.slice(5, -1)
+			assert.ok(html.includes(`id="${id}"`), `label[for="${id}"] has no control`)
+		}
+	})
+
+	it('flags rejected line-height input with aria-invalid and keeps the last rendering', () => {
+		assert.ok(html.includes('flagInvalid(lineHeightInput, true)'))
+		assert.ok(html.includes('input[type="number"][aria-invalid="true"]'))
 	})
 })
 
