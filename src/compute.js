@@ -59,7 +59,7 @@ function computeScale({scale, baseFontSize, lineHeight, rhythm}) {
 }
 
 /**
- * Convert a px font size to rem, assuming a 16px root.
+ * Convert a px font size to rem relative to the given root (16px unless told otherwise).
  * @param {number} px
  * @param {number} [rootSize=16]
  * @returns {string}
@@ -77,15 +77,16 @@ function pxToRem(px, rootSize = 16) {
  * @param {number} maxPx - Maximum font size in px
  * @param {number} [minViewport=320] - Min viewport width in px
  * @param {number} [maxViewport=1280] - Max viewport width in px
+ * @param {number} [rootSize=16] - Root font size the rem terms are relative to
  * @returns {string}
  */
-function fluidClamp(minPx, maxPx, minViewport = 320, maxViewport = 1280) {
-	const minRem = minPx / 16
+function fluidClamp(minPx, maxPx, minViewport = 320, maxViewport = 1280, rootSize = 16) {
+	const minRem = minPx / rootSize
 	const slope = (maxPx - minPx) / (maxViewport - minViewport)
 	const slopeVw = parseFloat((slope * 100).toFixed(4))
-	const intercept = parseFloat((minRem - (slope * minViewport) / 16).toFixed(4))
+	const intercept = parseFloat((minRem - (slope * minViewport) / rootSize).toFixed(4))
 
-	return `clamp(${pxToRem(minPx)}, ${intercept}rem + ${slopeVw}vw, ${pxToRem(maxPx)})`
+	return `clamp(${pxToRem(minPx, rootSize)}, ${intercept}rem + ${slopeVw}vw, ${pxToRem(maxPx, rootSize)})`
 }
 
 module.exports = {computeScale, smartLineHeight, pxToRem, fluidClamp}

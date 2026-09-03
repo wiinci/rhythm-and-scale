@@ -1,0 +1,19 @@
+// Typographic scale: Major third (1.25) at 16px
+// Add to tailwind.config.js → theme.extend.fontSize
+
+module.exports = {
+  theme: {
+    extend: {
+      fontSize: {
+        'small': ['0.8125rem', { lineHeight: '20px' }],
+        'default': ['1rem', { lineHeight: '24px' }],
+        'h6': ['1.25rem', { lineHeight: '32px' }],
+        'h5': ['1.5625rem', { lineHeight: '36px' }],
+        'h4': ['1.9375rem', { lineHeight: '44px' }],
+        'h3': ['2.4375rem', { lineHeight: '52px' }],
+        'h2': ['3.0625rem', { lineHeight: '60px' }],
+        'h1': ['3.8125rem', { lineHeight: '68px' }],
+      },
+    },
+  },
+};
