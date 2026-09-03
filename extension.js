@@ -3,7 +3,7 @@ const {SCALES} = require('./src/scales')
 const {computeScale} = require('./src/compute')
 const {formatOutput} = require('./src/format')
 const {OUTPUT_FORMATS, openOutputDocument} = require('./src/output-formats')
-const {showPreview} = require('./src/preview')
+const {createPreviewCommand} = require('./src/preview')
 
 /**
  * Validate that a string is a positive number.
@@ -86,9 +86,10 @@ function activate(context) {
 	)
 
 	// Command: Open live preview panel
-	const previewDisposable = vscode.commands.registerCommand('rhythm-and-scale.preview', () => {
-		showPreview(context)
-	})
+	const previewDisposable = vscode.commands.registerCommand(
+		'rhythm-and-scale.preview',
+		createPreviewCommand(vscode, context),
+	)
 
 	context.subscriptions.push(disposable, previewDisposable)
 }

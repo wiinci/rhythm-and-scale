@@ -1,53 +1,42 @@
 const {SCALES} = require('./scales')
-const {computeScale} = require('./compute')
+const {LIMITS} = require('./preview-model')
+
+/**
+ * Serialize the model for a <script type="application/json"> data block.
+ * `<` is escaped so no string in the model can close the block early.
+ * @param {object} model
+ * @returns {string}
+ */
+function embedModel(model) {
+	return JSON.stringify(model).replace(/</g, '\\u003c')
+}
+
+/**
+ * Build the `min`/`max`/`step` attributes for a numeric control from LIMITS,
+ * so the webview's bounds are the host's bounds.
+ * @param {keyof typeof LIMITS} key
+ * @returns {string}
+ */
+function limitAttributes(key) {
+	const {min, max, step} = LIMITS[key]
+	return `min="${min}" max="${max}" step="${step}"`
+}
 
 /**
  * Generate the HTML for the live preview webview.
- * @param {object} params
- * @param {number} params.scale - Scale ratio
- * @param {number} params.baseFontSize - Base font size in px
- * @param {number} params.lineHeight - Line height multiplier
- * @param {number} params.rhythm - Rhythm grid in px
- * @param {string} params.scaleName - Human-readable scale name
+ *
+ * The page is a renderer, not a calculator: the host's display model is
+ * embedded as JSON, and the single `render(model)` in the inline script writes
+ * every number, text and CSS custom property from it — on first paint and on
+ * every later `render` message. Nothing in the webview derives a value.
+ *
+ * @param {ReturnType<import('./preview-model').buildPreviewModel>} model
  * @returns {string} HTML content
  */
-function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName}) {
-	const items = computeScale({scale, baseFontSize, lineHeight, rhythm})
-
-	// Generate CSS custom properties
-	let cssVars = ''
-	for (const item of items) {
-		cssVars += `    --font-size-${item.label}: ${item.fontSize}px;\n`
-		cssVars += `    --line-height-${item.label}: ${item.lineHeight}px;\n`
-	}
-
-	// Generate scale options for dropdown
-	const scaleOptions = SCALES.map(
-		(s) =>
-			`<option value="${s.detail}" ${s.detail === scale.toString() ? 'selected' : ''}>${s.label} (${s.detail})</option>`,
-	).join('\n')
-
-	// Generate preview samples
-	let samples = ''
-	for (const item of items) {
-		const displayLabel =
-			item.label === 'default'
-				? 'Body Text'
-				: item.label === 'small'
-					? 'Small Text'
-					: item.label.toUpperCase()
-		samples += `
-      <div class="sample" data-label="${item.label}">
-        <div class="sample-label">${displayLabel}</div>
-        <div class="sample-text" style="font-size: var(--font-size-${item.label}); line-height: var(--line-height-${item.label});">
-          The quick brown fox jumps over the lazy dog
-        </div>
-        <div class="sample-meta">
-          ${item.fontSize}px / ${item.lineHeight}px (×${item.lineHeightMultiplier})
-        </div>
-      </div>
-    `
-	}
+function generatePreviewHTML(model) {
+	const scaleOptions = SCALES.map((s) => `<option value="${s.detail}">${s.label} (${s.detail})</option>`).join(
+		'\n          ',
+	)
 
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -64,10 +53,6 @@ function generatePreviewHTML({scale, baseFontSize, lineHeight, rhythm, scaleName
       color: var(--vscode-foreground);
       background: var(--vscode-editor-background);
       padding: 20px;
-    }
-
-    :root {
-${cssVars}
     }
 
     .container {
@@ -295,15 +280,7 @@ ${cssVars}
       font-size: 11px;
       color: var(--vscode-descriptionForeground);
       font-family: var(--vscode-editor-font-family);
-    }
-
-    .scale-info {
-      margin-bottom: 20px;
-      padding: 12px;
-      background: var(--vscode-textBlockQuote-background);
-      border-left: 3px solid var(--vscode-textLink-foreground);
-      font-size: 13px;
-      color: var(--vscode-descriptionForeground);
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
@@ -325,158 +302,158 @@ ${cssVars}
       <div class="control-group">
         <label for="baseFontSize">Base Font Size (px)</label>
         <div class="slider-wrapper">
-          <input type="range" id="baseFontSize" value="${baseFontSize}" min="4" max="40" step="4">
-          <span class="slider-value" id="baseFontSizeValue">${baseFontSize}</span>
+          <input type="range" id="baseFontSize" ${limitAttributes('baseFontSize')}>
+          <span class="slider-value" id="baseFontSizeValue"></span>
         </div>
       </div>
 
       <div class="control-group">
         <label for="lineHeight">Line Height</label>
-        <input type="number" id="lineHeight" value="${lineHeight}" min="1" max="3" step="0.1">
+        <input type="number" id="lineHeight" ${limitAttributes('lineHeight')}>
       </div>
 
       <div class="control-group">
         <label for="rhythm">Vertical Rhythm (px)</label>
         <div class="slider-wrapper">
-          <input type="range" id="rhythm" value="${rhythm}" min="4" max="20" step="1">
-          <span class="slider-value" id="rhythmValue">${rhythm}</span>
+          <input type="range" id="rhythm" ${limitAttributes('rhythm')}>
+          <span class="slider-value" id="rhythmValue"></span>
         </div>
       </div>
     </div>
 
-    <div class="scale-info">
-      Current scale: <strong>${scaleName}</strong> (${scale}) at ${baseFontSize}px base
-    </div>
-
     <div class="actions">
-      <button id="copyCSS">Copy CSS</button>
-      <button id="copyFluid" class="secondary">Copy Fluid CSS</button>
-      <button id="copyRhythm" class="secondary">Copy Rhythm CSS</button>
-      <button id="copyRhythmTrim" class="secondary">Copy Rhythm + Trim</button>
-      <button id="copyTailwind" class="secondary">Copy Tailwind</button>
-      <button id="copyTokens" class="secondary">Copy Tokens</button>
+      <button id="copy">Copy…</button>
+      <button id="open" class="secondary">Open…</button>
     </div>
 
-    <div class="preview">
-      ${samples}
-    </div>
+    <div class="preview" id="preview"></div>
   </div>
 
+  <script type="application/json" id="model">${embedModel(model)}</script>
   <script>
-    const vscode = acquireVsCodeApi();
+    // Outside VS Code (tests, screenshots) there is no host to talk to.
+    const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : {postMessage() {}};
 
-    // Scale steps configuration
-    const STEPS = [
-      { exponent: -1, label: 'small' },
-      { exponent: 0, label: 'default' },
-      { exponent: 1, label: 'h6' },
-      { exponent: 2, label: 'h5' },
-      { exponent: 3, label: 'h4' },
-      { exponent: 4, label: 'h3' },
-      { exponent: 5, label: 'h2' },
-      { exponent: 6, label: 'h1' }
-    ];
-
-    // Smart line-height: tighter for headings, generous for body
-    const TIGHT_MIN = 1.1;
-    function smartLineHeight(exponent, userLineHeight) {
-      if (exponent <= 0) return userLineHeight;
-      const t = exponent / 6;
-      return userLineHeight - (userLineHeight - TIGHT_MIN) * t;
-    }
-
-    // Get all controls
+    const root = document.documentElement;
     const scaleSelect = document.getElementById('scale');
     const baseFontSizeInput = document.getElementById('baseFontSize');
     const baseFontSizeValue = document.getElementById('baseFontSizeValue');
     const lineHeightInput = document.getElementById('lineHeight');
     const rhythmInput = document.getElementById('rhythm');
     const rhythmValue = document.getElementById('rhythmValue');
-    const scaleInfoDiv = document.querySelector('.scale-info');
+    const preview = document.getElementById('preview');
 
-    // Compute scale and update UI
-    function updatePreview() {
-      const scale = parseFloat(scaleSelect.value);
-      const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim();
-      const baseFontSize = parseInt(baseFontSizeInput.value);
-      const lineHeight = parseFloat(lineHeightInput.value);
-      const rhythm = parseInt(rhythmInput.value);
+    const DISPLAY_LABELS = {default: 'Body Text', small: 'Small Text'};
 
-      // Update scale info text
-      scaleInfoDiv.innerHTML = \`Current scale: <strong>\${scaleName}</strong> (\${scale}) at \${baseFontSize}px base\`;
+    /** The last model the host sent; the only source of every value on screen. */
+    let current = null;
 
-      // Compute and apply CSS variables
-      const root = document.documentElement;
-      STEPS.forEach(step => {
-        const fontSize = Math.round(Math.pow(scale, step.exponent) * baseFontSize);
-        const multiplier = smartLineHeight(step.exponent, lineHeight);
-        const rawLineHeight = Math.ceil(fontSize * multiplier);
-        const snapped = Math.ceil(rawLineHeight / rhythm) * rhythm;
-        const minLineHeight = Math.ceil(fontSize / rhythm) * rhythm;
-        const computedLineHeight = Math.max(snapped, minLineHeight);
-        
-        root.style.setProperty(\`--font-size-\${step.label}\`, \`\${fontSize}px\`);
-        root.style.setProperty(\`--line-height-\${step.label}\`, \`\${computedLineHeight}px\`);
-
-        // Update meta text
-        const metaEl = document.querySelector(\`.sample[data-label="\${step.label}"] .sample-meta\`);
-        if (metaEl) {
-          metaEl.textContent = \`\${fontSize}px / \${computedLineHeight}px (×\${multiplier.toFixed(2)})\`;
-        }
-      });
+    // A control being edited keeps its text: writing the host's value into a
+    // focused field would clobber a half-typed number.
+    function setControlValue(input, value) {
+      if (document.activeElement !== input) input.value = String(value);
     }
 
-    // Update slider value displays and preview
+    // Create the sample shell for a step once; render() fills it every time.
+    function sampleFor(label) {
+      let sample = preview.querySelector('.sample[data-label="' + label + '"]');
+      if (!sample) {
+        sample = document.createElement('div');
+        sample.className = 'sample';
+        sample.dataset.label = label;
+        sample.innerHTML =
+          '<div class="sample-label"></div>' +
+          '<div class="sample-text" style="font-size: var(--font-size-' + label + '); line-height: var(--line-height-' + label + ');">' +
+          'The quick brown fox jumps over the lazy dog</div>' +
+          '<div class="sample-meta"></div>';
+        preview.appendChild(sample);
+      }
+      return sample;
+    }
+
+    /** Write the host's model to the page. Nothing here derives a value. */
+    function render(model) {
+      current = model;
+
+      root.style.setProperty('--rhythm', model.rhythm + 'px');
+      root.style.setProperty('--lh-body', model.lineHeightBodyPx + 'px');
+
+      for (const option of scaleSelect.options) {
+        option.selected = Number(option.value) === model.scale;
+      }
+      setControlValue(baseFontSizeInput, model.baseFontSize);
+      setControlValue(lineHeightInput, model.lineHeight);
+      setControlValue(rhythmInput, model.rhythm);
+      baseFontSizeValue.textContent = String(model.baseFontSize);
+      rhythmValue.textContent = String(model.rhythm);
+
+      for (const step of model.steps) {
+        root.style.setProperty('--font-size-' + step.label, step.fontSizePx + 'px');
+        root.style.setProperty('--line-height-' + step.label, step.lineHeightPx + 'px');
+
+        const sample = sampleFor(step.label);
+        sample.querySelector('.sample-label').textContent =
+          DISPLAY_LABELS[step.label] || step.label.toUpperCase();
+        sample.querySelector('.sample-meta').textContent =
+          step.fontSizePx + ' / ' + step.lineHeightPx + ' px · ' +
+          step.fontSizeRem + ' · ×' + step.ratio + ' · ' +
+          step.rhythmUnits + ' × ' + model.rhythm;
+      }
+    }
+
+    // Input patches are coalesced per animation frame so a slider drag sends
+    // one message per painted frame rather than one per pointer event.
+    let pendingPatch = null;
+    function queuePatch(patch) {
+      const first = pendingPatch === null;
+      pendingPatch = Object.assign(pendingPatch || {}, patch);
+      if (first) {
+        requestAnimationFrame(() => {
+          const patchToSend = pendingPatch;
+          pendingPatch = null;
+          vscode.postMessage({type: 'input', patch: patchToSend});
+        });
+      }
+    }
+
+    scaleSelect.addEventListener('change', () => {
+      queuePatch({scale: Number(scaleSelect.value)});
+    });
     baseFontSizeInput.addEventListener('input', () => {
-      baseFontSizeValue.textContent = baseFontSizeInput.value;
-      updatePreview();
+      queuePatch({baseFontSize: baseFontSizeInput.valueAsNumber});
     });
-
     rhythmInput.addEventListener('input', () => {
-      rhythmValue.textContent = rhythmInput.value;
-      updatePreview();
+      queuePatch({rhythm: rhythmInput.valueAsNumber});
+    });
+    lineHeightInput.addEventListener('input', () => {
+      // Blank or unparseable text is not a value; the host keeps the last valid state.
+      if (Number.isFinite(lineHeightInput.valueAsNumber)) {
+        queuePatch({lineHeight: lineHeightInput.valueAsNumber});
+      }
+    });
+    lineHeightInput.addEventListener('blur', () => {
+      // Leaving the field with junk in it restores the last value the host accepted.
+      if (current && !Number.isFinite(lineHeightInput.valueAsNumber)) {
+        lineHeightInput.value = String(current.lineHeight);
+      }
     });
 
-    scaleSelect.addEventListener('change', updatePreview);
-    lineHeightInput.addEventListener('input', updatePreview);
-
-    // Copy buttons - send current state to extension
-    function getCurrentState() {
-      return {
-        scale: parseFloat(scaleSelect.value),
-        scaleName: scaleSelect.options[scaleSelect.selectedIndex].text.split('(')[0].trim(),
-        baseFontSize: parseInt(baseFontSizeInput.value),
-        lineHeight: parseFloat(lineHeightInput.value),
-        rhythm: parseInt(rhythmInput.value)
-      };
-    }
-
-    document.getElementById('copyCSS').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css', state: getCurrentState() });
+    document.getElementById('copy').addEventListener('click', () => {
+      vscode.postMessage({type: 'copy'});
+    });
+    document.getElementById('open').addEventListener('click', () => {
+      vscode.postMessage({type: 'open'});
     });
 
-    document.getElementById('copyFluid').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css-fluid', state: getCurrentState() });
+    window.addEventListener('message', (event) => {
+      const message = event.data;
+      if (message && message.type === 'render') render(message.model);
     });
 
-    document.getElementById('copyTailwind').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'tailwind', state: getCurrentState() });
-    });
-
-    document.getElementById('copyRhythm').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css-rhythm', state: getCurrentState() });
-    });
-
-    document.getElementById('copyRhythmTrim').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'css-rhythm-trim', state: getCurrentState() });
-    });
-
-    document.getElementById('copyTokens').addEventListener('click', () => {
-      vscode.postMessage({ command: 'copy', format: 'tokens', state: getCurrentState() });
-    });
+    render(JSON.parse(document.getElementById('model').textContent));
   </script>
 </body>
 </html>`
 }
 
-module.exports = {generatePreviewHTML}
+module.exports = {generatePreviewHTML, embedModel}
