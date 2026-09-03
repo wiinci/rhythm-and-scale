@@ -14,6 +14,9 @@ const {pxToRem, fluidClamp} = require('./compute')
  * @property {OutputFormat} format - Output format
  */
 
+/** Viewport range the fluid clamp() interpolates across, in px. */
+const FLUID_VIEWPORT = {min: 320, max: 1280}
+
 /**
  * Format computed scale items into CSS custom properties (static px/rem).
  *
@@ -57,14 +60,16 @@ function formatCSSFluid(items, options) {
 	content += `  Fluid typographic scale: ${scaleName} (${scaleValue}) at ${baseFontSize}px\n`
 	content += `  Line-height: ${lineHeight}\n`
 	content += `  Vertical rhythm: ${rhythm}px\n`
-	content += `  Fluid range: 320px – 1280px viewport\n`
+	content += `  Fluid range: ${FLUID_VIEWPORT.min}px – ${FLUID_VIEWPORT.max}px viewport\n`
 	content += `*/\n\n`
 	content += `:root {\n`
 
 	for (const item of items) {
 		const minFontSize = Math.round(item.fontSize * mobileRatio)
 		const maxFontSize = item.fontSize
-		content += `  --font-size-${item.label}: ${fluidClamp(minFontSize, maxFontSize)};\n`
+		// Same rem root as every other format: the base size, not a fixed 16px
+		const clamp = fluidClamp(minFontSize, maxFontSize, FLUID_VIEWPORT.min, FLUID_VIEWPORT.max, baseFontSize)
+		content += `  --font-size-${item.label}: ${clamp};\n`
 		content += `  --line-height-${item.label}: ${item.lineHeight}px;\n`
 	}
 
